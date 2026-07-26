@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#08090c">
+  <meta name="description" content="Nightmare 404 v2.0.0 Remastered: juego web de terror psicológico, investigación y supervivencia en Black Hollow.">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="Nightmare 404">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Nightmare 404">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Nightmare 404 — Remastered v2.0.0</title>
+  <link rel="preload" href="assets/images/menu-hero.webp" as="image" type="image/webp">
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/data.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+  <div class="ambient-backdrop" aria-hidden="true"></div>
+  <div class="rain-canvas" aria-hidden="true"></div>
+  <div class="crt" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <main id="main-content" class="app-shell" tabindex="-1">
+    <section id="screen-menu" class="screen screen--active menu-screen" aria-labelledby="game-title" aria-hidden="false">
+      <div class="menu-cinematic">
+        <div class="menu-visual" role="img" aria-label="Los investigadores frente al Bloque 404 bajo una tormenta">
+          <div class="menu-visual__label"><span>BLACK HOLLOW</span><b>24 MAY 1997 · 04:04</b></div>
+          <div class="menu-visual__cast" aria-hidden="true">
+            <span>LUCÍA VEGA</span><span>GABRIEL ROJAS</span><span>NOA SANZ</span>
+          </div>
+        </div>
+
+        <div class="menu-interface">
+          <header class="system-strip">
+            <span class="system-strip__signal"><i aria-hidden="true"></i> SEÑAL <b id="menu-signal">ESTABLE</b></span>
+            <span>REMASTERED · v2.0.0</span>
+          </header>
+
+          <div class="menu-brand">
+            <img src="assets/images/universe-404.webp" alt="Símbolo del Universo 404" class="universe-logo" width="768" height="768" decoding="async" fetchpriority="high">
+            <div>
+              <p class="overline">BLACK HOLLOW INCIDENT</p>
+              <h1 id="game-title"><span>NIGHTMARE</span><strong>404</strong></h1>
+              <p class="tagline">La realidad no es un hecho. Es una frecuencia.</p>
+            </div>
+          </div>
+
+          <p class="menu-premise">Cinco anomalías transmiten desde una ciudad que no aparece en los mapas. Investiga, sobrevive y decide qué versión de la verdad merece despertar.</p>
+
+          <nav class="main-menu" aria-label="Menú principal">
+            <button type="button" data-action="new-game">
+              <span class="menu-command">01</span><span><b>Nueva campaña</b><small>Elige investigador y abre el primer expediente</small></span><i aria-hidden="true">→</i>
+            </button>
+            <button type="button" data-action="continue" id="continue-btn">
+              <span class="menu-command">02</span><span><b>Continuar</b><small id="continue-meta">No hay una campaña guardada</small></span><i aria-hidden="true">→</i>
+            </button>
+            <button type="button" data-action="archive">
+              <span class="menu-command">03</span><span><b>Archivo 404</b><small>Entidades, objetos y casos descubiertos</small></span><i aria-hidden="true">→</i>
+            </button>
+            <button type="button" data-action="achievements">
+              <span class="menu-command">04</span><span><b>Progreso</b><small id="profile-summary">Logros, finales y estadísticas</small></span><i aria-hidden="true">→</i>
+            </button>
+            <button type="button" data-action="settings">
+              <span class="menu-command">05</span><span><b>Opciones</b><small>Audio, accesibilidad y datos</small></span><i aria-hidden="true">→</i>
+            </button>
+            <button type="button" data-action="credits">
+              <span class="menu-command">06</span><span><b>Créditos</b><small>Universo, tecnología y controles</small></span><i aria-hidden="true">→</i>
+            </button>
+          </nav>
+
+          <footer class="menu-footer">
+            <div><span>CAMPAÑA COMPLETA</span><b>5 casos · 4 finales · 12 logros</b></div>
+            <div class="menu-footer__warning">CONTENIDO DE TERROR PSICOLÓGICO</div>
+          </footer>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-character" class="screen dossier-screen" aria-labelledby="character-title" aria-hidden="true">
+      <header class="screen-header screen-header--hero">
+        <button type="button" class="ghost-button" data-back="menu" aria-label="Volver al menú">← Menú</button>
+        <div>
+          <p class="eyebrow">PROTOCOLO DE ACCESO · NUEVA CAMPAÑA</p>
+          <h2 id="character-title">Elige quién entra en Black Hollow</h2>
+          <p>Cada investigador altera recursos, decisiones y estrategia. No existe una elección segura.</p>
+        </div>
+        <span class="header-code" aria-hidden="true">N404 / 01</span>
+      </header>
+      <div id="character-grid" class="character-grid"></div>
+      <p class="help-text"><span aria-hidden="true">◇</span> La campaña completa puede terminarse con cualquiera de los tres investigadores.</p>
+    </section>
+
+    <section id="screen-map" class="screen map-screen" aria-labelledby="map-title" aria-hidden="true">
+      <header class="campaign-hud glass-panel">
+        <div class="hud-character">
+          <img id="map-portrait" src="assets/images/lucia.webp" alt="" width="320" height="400" decoding="async">
+          <div><span>INVESTIGADOR ACTIVO</span><strong id="map-name">—</strong><small id="map-role">—</small></div>
+        </div>
+        <div class="mini-meter"><span>VIDA</span><strong id="map-health">—</strong></div>
+        <div class="mini-meter"><span>CORDURA</span><strong id="map-sanity">—</strong></div>
+        <div class="mini-meter"><span>SEÑAL</span><strong id="map-signal">—</strong></div>
+        <div class="mini-meter"><span>TIEMPO</span><strong id="map-time">—</strong></div>
+        <button type="button" class="ghost-button" id="map-pause">Pausa</button>
+      </header>
+
+      <header class="screen-header map-heading">
+        <div>
+          <p class="eyebrow">RED DE ANOMALÍAS · BLACK HOLLOW</p>
+          <h2 id="map-title">Selecciona el siguiente expediente</h2>
+          <p>Los cuatro focos exteriores pueden investigarse en cualquier orden. El Nexo permanece bajo la ciudad.</p>
+        </div>
+        <div class="campaign-totals" aria-label="Progreso de campaña">
+          <span><small>SELLOS</small><b id="map-seals">0</b></span>
+          <span><small>CONOCIMIENTO</small><b id="map-knowledge">0</b></span>
+          <span><small>CASOS</small><b id="map-cases">0/4</b></span>
+        </div>
+      </header>
+
+      <div id="case-grid" class="case-grid"></div>
+
+      <section class="campaign-brief glass-panel">
+        <div class="campaign-brief__copy">
+          <p class="eyebrow">TRANSMISIÓN INTERCEPTADA</p>
+          <h3 id="brief-title">La ciudad sigue transmitiendo</h3>
+          <p id="brief-copy">Cuatro anomalías rodean Black Hollow. Resolverlas abrirá el origen de la pesadilla.</p>
+        </div>
+        <div>
+          <p class="weather-heading">PRONÓSTICO DE INTERFERENCIA</p>
+          <div id="weather-report" class="weather-report"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="screen-game" class="screen game-screen" aria-labelledby="location-title" aria-hidden="true">
+      <header class="hud glass-panel">
+        <div class="hud-character">
+          <img id="hud-portrait" src="assets/images/lucia.webp" alt="" width="320" height="400" decoding="async">
+          <div><span>OPERADOR</span><strong id="hud-name">—</strong><small id="hud-case">—</small></div>
+        </div>
+        <div class="meter-group">
+          <label><span>VIDA</span><b id="health-value">0/0</b></label>
+          <div class="meter" id="health-meter" role="progressbar" aria-label="Vida" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="health-bar"></span></div>
+        </div>
+        <div class="meter-group">
+          <label><span>CORDURA</span><b id="sanity-value">0/0</b></label>
+          <div class="meter meter--sanity" id="sanity-meter" role="progressbar" aria-label="Cordura" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="sanity-bar"></span></div>
+        </div>
+        <div class="hud-stat"><span>SEÑAL</span><strong id="signal-value">0%</strong></div>
+        <div class="hud-stat"><span>PISTAS</span><strong id="clue-value">0/4</strong></div>
+        <button type="button" class="ghost-button" id="pause-btn" aria-haspopup="dialog">Pausa</button>
+      </header>
+
+      <div class="game-layout">
+        <section class="scene-panel glass-panel">
+          <div class="scene-art scene--block" id="scene-art" aria-hidden="true">
+            <div class="sky-orb"></div>
+            <div class="weather-layer"></div>
+            <div class="scene-silhouette"></div>
+            <div class="scene-glow"></div>
+            <div class="scene-grid"></div>
+            <span class="scene-code" id="scene-code">404</span>
+            <span class="scene-frequency">FREQ. 0404.97</span>
+          </div>
+          <div class="scene-copy">
+            <div class="scene-meta">
+              <p class="eyebrow" id="time-label">DÍA 1 · 22:40</p>
+              <p class="weather-chip" id="weather-label">//// LLUVIA</p>
+            </div>
+            <h2 id="location-title">Bloque 404</h2>
+            <p id="scene-description">El ascensor marca una planta que no existe.</p>
+          </div>
+        </section>
+
+        <aside class="side-panel glass-panel">
+          <section class="mission-card">
+            <p class="panel-kicker">DIRECTIVA ACTUAL</p>
+            <h3>Objetivo</h3>
+            <p id="objective-text">Reúne pistas y encuentra el foco de la anomalía.</p>
+          </section>
+          <section>
+            <div class="panel-title"><h3>Equipo</h3><span id="inventory-count">0/6</span></div>
+            <ul id="inventory-list" class="inventory-list"></ul>
+          </section>
+          <section class="log-section">
+            <div class="panel-title"><h3>Registro</h3><span>ÚLTIMAS SEÑALES</span></div>
+            <ol id="game-log" class="game-log"></ol>
+          </section>
+        </aside>
+      </div>
+
+      <div class="action-bar glass-panel" aria-label="Acciones del juego">
+        <button type="button" id="explore-btn" data-game-action="explore"><span class="action-key">1</span><span><b>Explorar</b><small>Avanza y busca recursos</small></span></button>
+        <button type="button" id="investigate-btn" data-game-action="investigate"><span class="action-key">2</span><span><b>Investigar</b><small>Busca pistas con cautela</small></span></button>
+        <button type="button" id="rest-btn" data-game-action="rest"><span class="action-key">3</span><span><b>Recuperarse</b><small>Restaura cuerpo y mente</small></span></button>
+        <button type="button" id="confront-btn" data-game-action="confront" disabled><span class="action-key">4</span><span><b>Confrontar foco</b><small>Abre el enfrentamiento final</small></span></button>
+        <button type="button" id="return-map-btn" data-game-action="return"><span class="action-key">M</span><span><b>Mapa</b><small>Guardar y salir del caso</small></span></button>
+      </div>
+    </section>
+
+    <section id="screen-info" class="screen dossier-screen" aria-labelledby="info-title" aria-hidden="true">
+      <header class="screen-header screen-header--hero">
+        <button type="button" class="ghost-button" data-back="menu">← Menú</button>
+        <div><p class="eyebrow" id="info-eyebrow">ARCHIVO</p><h2 id="info-title">Archivo</h2><p>Documentación recuperada de la frecuencia 404.</p></div>
+        <span class="header-code" aria-hidden="true">N404 / DB</span>
+      </header>
+      <div id="info-content" class="info-content glass-panel"></div>
+    </section>
+  </main>
+
+  <dialog id="game-dialog" class="game-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-scanline" aria-hidden="true"></div>
+    <div id="dialog-content"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="live-region" class="sr-only" aria-live="assertive"></div>
+  <noscript>Nightmare 404 necesita JavaScript para funcionar.</noscript>
+</body>
+</html>
