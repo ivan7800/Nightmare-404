@@ -248,13 +248,13 @@
     const now = Date.now();
     if (!force && now < anomalyCooldown) return;
     const band = sanityBand();
-    const chance = band === "fractured" ? .32 : band === "critical" ? .18 : band === "frayed" ? .06 : .018;
+    const chance = band === "fractured" ? .20 : band === "critical" ? .11 : band === "frayed" ? .035 : .01;
     if (!force && Math.random() > chance) return;
-    anomalyCooldown = now + 9000;
+    anomalyCooldown = now + 15000;
     const art = document.getElementById("scene-art");
     const flash = document.getElementById("anomaly-flash");
-    if (art) retriggerClass(art, "scene-anomaly-active", 980);
-    if (flash && (band === "fractured" || force)) retriggerClass(flash, "anomaly-flash--show", 520);
+    if (art) retriggerClass(art, "scene-anomaly-active", 760);
+    if (flash && (band === "fractured" || force)) retriggerClass(flash, "anomaly-flash--show", 360);
     sceneStinger("danger");
   }
 
@@ -712,13 +712,20 @@
   }
 
   function renderCharacterSelect() {
-    document.getElementById("character-grid").innerHTML = DATA.characters.map((character, index) => `
+    document.getElementById("character-grid").innerHTML = DATA.characters.map((character, index) => {
+      const approach = character.passiveKey === "spiritDamage"
+        ? ["Choque espiritual", "Daño alto", "Control ritual"]
+        : character.passiveKey === "signalControl"
+          ? ["Manipulación de Señal", "Riesgo táctico", "Alta iniciativa"]
+          : ["Perfil equilibrado", "Investigación", "Supervivencia"];
+      return `
       <button class="character-card" data-character="${character.id}" data-index="${String(index + 1).padStart(2, "0")}">
         <img src="${character.image}" alt="Retrato pixel art de ${escapeHTML(character.name)}" width="320" height="400" loading="lazy" decoding="async">
         <div class="character-card__body">
-          <span class="role">${escapeHTML(character.role)}</span>
+          <div class="character-card__head"><span class="role">${escapeHTML(character.role)}</span><span class="character-index">SUJETO ${String(index + 1).padStart(2, "0")}</span></div>
           <h3>${escapeHTML(character.name)}</h3>
           <p>${escapeHTML(character.description)}</p>
+          <div class="character-traits">${approach.map(tag => `<span>${escapeHTML(tag)}</span>`).join("")}</div>
           <div class="stat-grid" aria-label="Estadísticas">
             <span>VIDA<br><b>${character.health}</b></span>
             <span>CORDURA<br><b>${character.sanity}</b></span>
@@ -727,9 +734,10 @@
           </div>
           <p class="passive">${escapeHTML(character.passive)}</p>
           <p class="special-line"><b>${escapeHTML(character.special)}:</b> ${escapeHTML(character.specialText)}</p>
+          <p class="character-cta">Pulsa para descender a Black Hollow</p>
         </div>
       </button>
-    `).join("");
+    `;}).join("");
   }
 
   function startNewGame(characterId) {
@@ -872,6 +880,10 @@
           <span class="case-location">${escapeHTML(caseData.location)}</span>
           <p><b>${escapeHTML(caseData.tagline)}</b></p>
           <p>${escapeHTML(caseData.description)}</p>
+          <div class="case-intel-grid" aria-hidden="true">
+            <span><small>PISTAS</small><b>${progress ? progress.clues : 0}/${caseData.clueTarget}</b></span>
+            <span><small>EVENTOS</small><b>${progress ? progress.explored : 0}/${caseData.minExplores}</b></span>
+          </div>
           <div class="case-progress" aria-hidden="true"><span style="width:${progressRatio}%"></span></div>
           <div class="case-status">
             <span>${status}</span>
@@ -892,6 +904,28 @@
       const weather = DATA.weather[(currentIndex + offset) % DATA.weather.length];
       return `<div class="weather-day"><strong>${offset === 0 ? "AHORA" : `+${offset} TURNO${offset > 1 ? "S" : ""}`}</strong><span>${weather.icon} ${escapeHTML(weather.name)}</span></div>`;
     }).join("");
+
+    const doctrine = state.seals === state.knowledge ? "MIXTA" : state.seals > state.knowledge ? "CONTENCIÓN" : "CONOCIMIENTO";
+    const pressure = state.signal >= 70 ? "CRÍTICA" : state.signal >= 45 ? "ALTA" : state.signal >= 20 ? "MEDIA" : "BAJA";
+    const protocol = solved >= 4 ? "ABRIR NEXO" : solved >= 2 ? "AISLAR PATRÓN" : "EVALUAR FOCOS";
+    document.getElementById("map-doctrine").textContent = doctrine;
+    document.getElementById("map-pressure").textContent = pressure;
+    document.getElementById("map-protocol").textContent = protocol;
+    document.getElementById("command-title").textContent = solved >= 4 ? "El mapa se ha plegado sobre el Nexo" : solved >= 2 ? "La ciudad ya muestra un patrón reconocible" : "La frecuencia busca una forma de entrar";
+    document.getElementById("command-copy").textContent = solved >= 4
+      ? "Has silenciado los cuatro focos exteriores. Todo lo aprendido converge ahora en la Señal Madre y en la decisión final del incidente."
+      : solved >= 2
+        ? "Cada expediente resuelto refuerza la lectura del fenómeno. Tus sellos y tu conocimiento ya están modelando el desenlace de Black Hollow."
+        : "Empieza por los focos exteriores. La campaña no premia correr hacia el Nexo sin comprender antes cómo respira la anomalía.";
+    document.getElementById("insight-title").textContent = solved >= 4 ? "El descenso ya no es teórico" : state.signal >= 55 ? "La Señal está empujando demasiado fuerte" : "Black Hollow todavía puede contenerse";
+    document.getElementById("insight-copy").textContent = solved >= 4
+      ? "El siguiente paso no consiste en investigar más la periferia, sino en aceptar que todas las rutas llevan al mismo corazón sumergido."
+      : state.signal >= 55
+        ? "Prioriza expedientes que puedas cerrar pronto o descansa antes de continuar. La presión de Señal puede volver hostiles incluso las rutas más estables."
+        : "Resuelve anomalías exteriores para reunir sellos, conocimiento y contexto antes de descender a la Señal Madre.";
+    document.getElementById("insight-tag-a").textContent = doctrine;
+    document.getElementById("insight-tag-b").textContent = pressure;
+    document.getElementById("insight-tag-c").textContent = solved >= 4 ? "Nexo listo" : `${solved}/4 focos`;
     saveGame();
   }
 
@@ -1062,6 +1096,22 @@
       : ready
         ? `Confronta a ${getEnemy(caseData.boss).name}.`
         : `${caseData.objective} Faltan ${Math.max(0, caseData.clueTarget - progress.clues)} pista(s).`;
+    const threat = state.signal >= 75 || healthRatio <= .3 || sanityRatio <= .3 ? "CRÍTICA" : state.signal >= 45 || healthRatio <= .55 || sanityRatio <= .55 ? "ALTA" : "ESTABLE";
+    const posture = progress.bossDefeated ? "CIERRE" : ready ? "CONFRONTAR" : progress.clues >= Math.ceil(caseData.clueTarget/2) ? "AISLAR" : "RECONOCER";
+    const windowState = progress.rests >= B.restCap ? "SIN DESCANSO" : ready ? "FOCO ABIERTO" : "ABIERTA";
+    const pulse = state.signal >= 70 ? "DESBORDADO" : state.signal >= 35 ? "INQUIETO" : "CONTROLADO";
+    const route = progress.bossDefeated ? "RESOLVER" : ready ? "DESCENDER" : progress.clues < caseData.clueTarget ? "INVESTIGAR" : "EXPLORAR";
+    const risk = healthRatio <= .3 || sanityRatio <= .3 ? "MUY ALTO" : state.signal >= 60 ? "ALTO" : state.signal >= 30 ? "MEDIO" : "BAJO";
+    const focusLabel = progress.bossDefeated ? "CAÍDO" : ready ? "REVELADO" : "ABIERTO";
+    const missionA = progress.bossDefeated ? "Resolver" : ready ? "Combatir" : "Investigar";
+    const missionB = healthRatio <= .45 || sanityRatio <= .45 ? "Recuperarse" : "Resistir";
+    const missionC = state.signal >= 60 ? "Contener" : "Cerrar";
+    const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    setText("game-threat", threat); setText("game-posture", posture); setText("game-window", windowState);
+    setText("game-command-title", progress.bossDefeated ? "El foco ha sido abatido: queda decidir su cierre" : ready ? `${getEnemy(caseData.boss).name} ya reconoce tu presencia` : "Mantén el equilibrio antes de forzar el foco");
+    setText("game-command-copy", progress.bossDefeated ? "Ya no estás investigando, sino decidiendo qué hacer con la herida abierta en la realidad." : ready ? "Has reunido suficientes pistas. El siguiente paso no es buscar más ruido, sino entrar al enfrentamiento con recursos todavía útiles." : "Explora, investiga y regula el desgaste. La mejor ruta no siempre es la más rápida: a veces consiste en llegar al boss con el cuerpo y la mente todavía útiles.");
+    setText("telemetry-pulse", pulse); setText("telemetry-route", route); setText("telemetry-risk", risk); setText("telemetry-focus", focusLabel);
+    setText("mission-tag-a", missionA); setText("mission-tag-b", missionB); setText("mission-tag-c", missionC);
     document.getElementById("confront-btn").disabled = !ready || progress.bossDefeated;
     document.getElementById("rest-btn").disabled = progress.rests >= B.restCap;
     updateAliveScene();
@@ -1384,6 +1434,11 @@
               <span>TÚ: <strong>${state.health}/${state.maxHealth} PV</strong></span>
               <span>CORDURA: <strong>${state.sanity}</strong></span>
               <span>SEÑAL: <strong>${state.signal}%</strong></span>
+            </div>
+            <div class="combat-readout" aria-hidden="true">
+              <span><small>FASE</small><b>${combatMeta.boss ? escapeHTML(window.N404_NOCTURNE?.bossPhases?.[phase] || phase.toUpperCase()) : 'CONTACTO'}</b></span>
+              <span><small>VENTAJA</small><b>${combatMeta.boost > 0 ? `+${combatMeta.boost}` : 'NEUTRA'}</b></span>
+              <span><small>GUARDIA</small><b>${combatMeta.guard || 0}</b></span>
             </div>
             ${message ? `<p class="outcome">${escapeHTML(message)}</p>` : ""}
           </div>
@@ -1947,6 +2002,21 @@
     const title = document.getElementById("info-title");
     const eyebrow = document.getElementById("info-eyebrow");
     const content = document.getElementById("info-content");
+    document.querySelectorAll(".codex-nav [data-info-action]").forEach(button => {
+      const active = button.dataset.infoAction === kind;
+      button.classList.toggle("is-active", active);
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    });
+    const codexHero = (kicker, headline, copy, metrics = []) => `
+      <section class="codex-hero">
+        <div class="codex-hero__copy">
+          <p class="panel-kicker">${escapeHTML(kicker)}</p>
+          <h3>${escapeHTML(headline)}</h3>
+          <p>${escapeHTML(copy)}</p>
+        </div>
+        <div class="codex-metrics">${metrics.map(([label, value]) => `<span><small>${escapeHTML(label)}</small><b>${escapeHTML(String(value))}</b></span>`).join("")}</div>
+      </section>`;
 
     if (kind === "archive") {
       eyebrow.textContent = "ARCHIVO DE BLACK HOLLOW";
@@ -1980,11 +2050,16 @@
         </article>
       `).join("");
       content.innerHTML = `
-        <p>Casos ${storedProfile.cases.length}/${DATA.cases.length} · Eventos ${storedProfile.events.length}/${DATA.events.length} · Entidades ${storedProfile.enemies.length}/${DATA.enemies.length + DATA.bosses.length} · Objetos ${storedProfile.items.length}/${Object.keys(DATA.items).length}</p>
-        <h3>Misterios</h3><div class="info-grid">${caseCards}</div>
-        <h3>Eventos</h3><div class="info-grid">${eventCards}</div>
-        <h3>Entidades</h3><div class="info-grid">${enemyCards}</div>
-        <h3>Objetos</h3><div class="info-grid">${itemCards}</div>
+        ${codexHero("ARCHIVO 404 · ÍNDICE DE EVIDENCIAS", "Todo lo que Black Hollow ha permitido recuperar", "El archivo ya no funciona como una lista plana: cada descubrimiento amplía la lectura del incidente y deja visibles los huecos que todavía no has conseguido llenar.", [
+          ["CASOS", `${storedProfile.cases.length}/${DATA.cases.length}`],
+          ["EVENTOS", `${storedProfile.events.length}/${DATA.events.length}`],
+          ["ENTIDADES", `${storedProfile.enemies.length}/${DATA.enemies.length + DATA.bosses.length}`],
+          ["OBJETOS", `${storedProfile.items.length}/${Object.keys(DATA.items).length}`]
+        ])}
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">EXPEDIENTES</p><h3>Misterios</h3></div><span>${storedProfile.cases.length}/${DATA.cases.length}</span></div><div class="info-grid">${caseCards}</div></section>
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">ECOS</p><h3>Eventos</h3></div><span>${storedProfile.events.length}/${DATA.events.length}</span></div><div class="info-grid">${eventCards}</div></section>
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">CATÁLOGO HOSTIL</p><h3>Entidades</h3></div><span>${storedProfile.enemies.length}/${DATA.enemies.length + DATA.bosses.length}</span></div><div class="info-grid">${enemyCards}</div></section>
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">INVENTARIO RECUPERADO</p><h3>Objetos</h3></div><span>${storedProfile.items.length}/${Object.keys(DATA.items).length}</span></div><div class="info-grid">${itemCards}</div></section>
       `;
     } else if (kind === "achievements") {
       eyebrow.textContent = "PROGRESO";
@@ -1996,21 +2071,29 @@
         vessel: "El Recipiente"
       };
       content.innerHTML = `
-        <p>Campañas iniciadas: <strong>${storedProfile.runs}</strong> · Derrotas: <strong>${storedProfile.failures}</strong> · Investigadores que completaron la historia: <strong>${storedProfile.completedCharacters.length}/3</strong></p>
-        <h3>Logros</h3>
-        <div class="info-grid">${DATA.achievements.map(achievement => `
-          <article class="info-card ${storedProfile.achievements.includes(achievement.id) ? "unlocked" : "locked"}">
-            <h3>${storedProfile.achievements.includes(achievement.id) ? "✓" : "?"} ${escapeHTML(achievement.name)}</h3>
+        <p class="codex-summary-line">Campañas iniciadas: <strong>${storedProfile.runs}</strong> · Derrotas: <strong>${storedProfile.failures}</strong> · Investigadores que completaron la historia: <strong>${storedProfile.completedCharacters.length}/3</strong></p>
+        ${codexHero("PERFIL DE CAMPAÑA", "Tu historial ya forma parte del incidente", "Logros y finales se presentan como una lectura de la huella que has dejado en Black Hollow, no como una lista de trofeos desconectados de la campaña.", [
+          ["CAMPAÑAS", storedProfile.runs],
+          ["DERROTAS", storedProfile.failures],
+          ["INVESTIGADORES", `${storedProfile.completedCharacters.length}/3`],
+          ["FINALES", `${storedProfile.endings.length}/4`]
+        ])}
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">HUELLAS</p><h3>Logros</h3></div><span>${storedProfile.achievements.length}/${DATA.achievements.length}</span></div>
+        <div class="info-grid achievement-grid">${DATA.achievements.map(achievement => `
+          <article class="info-card achievement-card ${storedProfile.achievements.includes(achievement.id) ? "unlocked" : "locked"}">
+            <span class="achievement-mark" aria-hidden="true">${storedProfile.achievements.includes(achievement.id) ? "✓" : "?"}</span>
+            <h3>${escapeHTML(achievement.name)}</h3>
             <p>${escapeHTML(achievement.description)}</p>
           </article>
-        `).join("")}</div>
-        <h3>Finales</h3>
-        <div class="info-grid">${Object.entries(endingNames).map(([id, name]) => `
-          <article class="info-card ${storedProfile.endings.includes(id) ? "unlocked" : "locked"}">
+        `).join("")}</div></section>
+        <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">DESENLACES</p><h3>Finales</h3></div><span>${storedProfile.endings.length}/4</span></div>
+        <div class="info-grid ending-grid">${Object.entries(endingNames).map(([id, name]) => `
+          <article class="info-card ending-record ${storedProfile.endings.includes(id) ? "unlocked" : "locked"}">
+            <span class="ending-record__code" aria-hidden="true">${id.toUpperCase().slice(0,3)}</span>
             <h3>${storedProfile.endings.includes(id) ? escapeHTML(name) : "Final no descubierto"}</h3>
             <p>${storedProfile.endings.includes(id) ? "Registrado en el Archivo 404." : "Tus decisiones todavía no han creado este desenlace."}</p>
           </article>
-        `).join("")}</div>
+        `).join("")}</div></section>
       `;
 
 } else if (kind === "gallery") {
@@ -2056,13 +2139,16 @@
         <p>${escapeHTML(entry?.text || "Evento recuperado de la frecuencia 404.")}</p>
       </article>`;
   }).join("");
+  const totalVisuals = Object.keys(window.N404_PREMIUM_ART?.prologue || {}).length + DATA.cases.filter(caseData => window.N404_NOCTURNE?.cases?.[caseData.id]?.art).length + Object.keys(window.N404_PREMIUM_ART?.events || {}).length + Object.keys(window.N404_PREMIUM_ART?.boss || {}).length + Object.keys(window.N404_PREMIUM_ART?.endings || {}).length;
   content.innerHTML = `
-    <p>Director's Cut convierte la galería en un codex visual: cada pieza pertenece a un expediente, entidad, evento o desenlace concreto.</p>
-    <h3>Prólogo</h3><div class="info-grid">${prologueCards}</div>
-    <h3>Emblemas de expediente</h3><div class="info-grid">${caseArtCards}</div>
-    <h3>Eventos ilustrados</h3><div class="info-grid">${eventArtCards}</div>
-    <h3>Jefes ilustrados</h3><div class="info-grid">${bossCards}</div>
-    <h3>Finales ilustrados</h3><div class="info-grid">${endingCards}</div>
+    ${codexHero("CODEX VISUAL · DIRECTOR'S CUT", "Black Hollow también cuenta su historia con imágenes", "Cada pieza visual está anclada a un momento concreto de la campaña: prólogo, expediente, evento, entidad o final. El objetivo es que el archivo parezca una producción del propio universo, no una carpeta de assets.", [
+      ["PIEZAS", totalVisuals], ["JEFES", Object.keys(window.N404_PREMIUM_ART?.boss || {}).length], ["FINALES", Object.keys(window.N404_PREMIUM_ART?.endings || {}).length], ["CASOS", DATA.cases.length]
+    ])}
+    <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">ANTES DEL DESCENSO</p><h3>Prólogo</h3></div><span>01</span></div><div class="info-grid gallery-grid">${prologueCards}</div></section>
+    <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">IDENTIDAD DE CASO</p><h3>Emblemas de expediente</h3></div><span>02</span></div><div class="info-grid gallery-grid">${caseArtCards}</div></section>
+    <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">MOMENTOS RECUPERADOS</p><h3>Eventos ilustrados</h3></div><span>03</span></div><div class="info-grid gallery-grid">${eventArtCards}</div></section>
+    <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">ANOMALÍAS MAYORES</p><h3>Jefes ilustrados</h3></div><span>04</span></div><div class="info-grid gallery-grid">${bossCards}</div></section>
+    <section class="codex-section"><div class="codex-section__head"><div><p class="panel-kicker">DESPUÉS DE LA SEÑAL</p><h3>Finales ilustrados</h3></div><span>05</span></div><div class="info-grid gallery-grid">${endingCards}</div></section>
   `;
     } else if (kind === "transmissions") {
       eyebrow.textContent = "DIRECTOR'S CUT · AUDIO ROOM";
@@ -2079,9 +2165,12 @@
             <button class="ghost-button transmission-play" data-transmission-scene="${escapeHTML(meta?.scene || caseData.scene)}" ${unlocked ? "" : "disabled"}>Escuchar ambiente</button>
           </article>`;
       }).join("");
+      const unlockedTransmissions = DATA.cases.filter(caseData => storedProfile.cases.includes(caseData.id) || state?.caseProgress?.[caseData.id]).length;
       content.innerHTML = `
-        <p>Previsualiza los paisajes sonoros recuperados sin iniciar una campaña. Los expedientes permanecen bloqueados hasta que has entrado en ellos o los has resuelto. Cada transmisión utiliza el paisaje local y sus motivos de peligro.</p>
-        <div class="transmission-toolbar"><button type="button" class="ghost-button" id="transmission-stop">Detener audio</button></div>
+        ${codexHero("SALA DE TRANSMISIONES", "El audio también conserva memoria", "Previsualiza paisajes sonoros, leitmotivs y capas ambientales sin iniciar una campaña. Las frecuencias permanecen bloqueadas hasta que has entrado en su expediente o lo has resuelto.", [
+          ["RECUPERADAS", `${unlockedTransmissions}/${DATA.cases.length}`], ["CANALES", "AMBIENTE"], ["DURACIÓN", "8 S"], ["FUENTE", "LOCAL"]
+        ])}
+        <div class="transmission-toolbar"><span>PREVISUALIZACIÓN TEMPORAL · AUDIO LOCAL</span><button type="button" class="ghost-button" id="transmission-stop">Detener audio</button></div>
         <div class="info-grid transmission-grid">${cards}</div>
       `;
       content.querySelectorAll("[data-transmission-scene]").forEach(button => button.addEventListener("click", () => {
@@ -2102,7 +2191,7 @@
       title.textContent = "Créditos";
       content.innerHTML = `
         <div class="info-grid">
-          <article class="info-card unlocked"><h3>Nightmare 404 Director's Cut v3.2.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Director's Cut con dirección contextual por escenario, jefes por fases, mezcla sonora adaptativa, capítulos, codex, estadísticas finales, recuperación de partida y PWA compatible con GitHub Pages.</p></article>
+          <article class="info-card unlocked"><h3>Nightmare 404 Director's Cut v3.6.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Director's Cut con nueva portada final cinematográfica, logo integrado, dirección contextual por escenario, jefes por fases, mezcla sonora adaptativa, capítulos, codex, estadísticas finales, recuperación de partida y PWA compatible con GitHub Pages.</p></article>
           <article class="info-card"><h3>Contenido</h3><p>Bloque 404, Hospital Saint Mercy, Bosque Raven Woods, Mansión Ashcroft y Nexo 404.</p><p>30 eventos narrativos, 20 enemigos, 5 jefes y 4 finales principales.</p></article>
           <article class="info-card"><h3>Identidad visual</h3><p>Icono Universo 404 aportado por el autor e integrado como símbolo central de la historia.</p><p>Dirección visual remasterizada: terror cinematográfico, expediente analógico, CRT y señal degradada.</p></article>
           <article class="info-card"><h3>Tecnología</h3><p>HTML5, CSS3, JavaScript, Web Audio API, audio HTML5 local, LocalStorage y Service Worker.</p><p>Sin librerías, rastreadores ni dependencias externas en ejecución.</p></article>
@@ -2313,6 +2402,9 @@ function showPrologue() {
   document.addEventListener("click", event => {
     const menu = event.target.closest("[data-action]");
     if (menu) handleMenuAction(menu.dataset.action);
+
+    const infoNav = event.target.closest("[data-info-action]");
+    if (infoNav) renderInfo(infoNav.dataset.infoAction);
 
     const back = event.target.closest("[data-back]");
     if (back) showScreen(back.dataset.back);

@@ -1,4 +1,4 @@
-# DIRECTOR'S CUT PASS — v3.2.0
+# DIRECTOR'S CUT PASS — v3.6.0
 
 ## Objetivo
 

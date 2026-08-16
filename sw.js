@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "nightmare-404-";
-const CACHE = `${CACHE_PREFIX}v3.2.0`;
+const CACHE = `${CACHE_PREFIX}v3.6.0`;
 const CORE = [
   "./",
   "./index.html",
@@ -71,6 +71,7 @@ const CORE = [
   "./assets/images/gabriel.webp",
   "./assets/images/lucia.webp",
   "./assets/images/menu-hero.webp",
+  "./assets/images/intro-hero-final.webp",
   "./assets/images/noa.webp",
   "./assets/images/scenes/block.webp",
   "./assets/images/scenes/forest.webp",

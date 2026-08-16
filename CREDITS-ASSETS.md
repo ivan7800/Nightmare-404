@@ -1,4 +1,4 @@
-# Créditos de assets — Nightmare 404 v3.2.0
+# Créditos de assets — Nightmare 404 v3.6.0
 
 Esta edición prioriza recursos originales y locales. La aplicación no carga audio, imágenes ni scripts desde terceros en tiempo de ejecución.
 

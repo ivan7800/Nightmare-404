@@ -6,7 +6,7 @@
 .event-art img{display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.015);filter:saturate(.86) contrast(1.08) brightness(.88);animation:eventArtDrift 9s ease-in-out infinite alternate}
 .event-art::before{content:"";position:absolute;z-index:2;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(3,4,7,.72)),radial-gradient(circle at 50% 40%,transparent 0 42%,rgba(0,0,0,.36) 100%);pointer-events:none}
 .event-art::after{content:"ARCHIVO VISUAL · EVIDENCIA RECONSTRUIDA";position:absolute;z-index:3;left:.7rem;bottom:.55rem;color:rgba(226,223,209,.7);font:600 .55rem/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.13em}
-.event-art--anomaly img{animation:eventArtAnomaly 5.5s steps(2,end) infinite}
+.event-art--anomaly img{animation:eventArtAnomaly 9s ease-in-out infinite}
 
 /* Full boss artworks layered over the existing procedural entity system */
 .entity-visual--premium{width:min(520px,96%);aspect-ratio:5/3;isolation:isolate;animation:premiumBossFloat 4.8s ease-in-out infinite}
@@ -86,6 +86,20 @@ body.reduce-motion .event-art img,body.reduce-motion .entity-visual--premium,bod
 @media (max-width:680px){.intro-overlay{margin-left:1.2rem;justify-content:flex-end;padding-bottom:12vh}.intro-overlay h1{font-size:clamp(4rem,22vw,6.8rem)}.case-cover{margin:-.75rem -.75rem .75rem}}
 @media (prefers-reduced-motion:reduce){.intro-art{animation:none}.case-cover img{transition:none}}
 
+/* FINAL HERO / SPLASH POLISH v3.2.2 */
+.intro-stage--poster .intro-art--poster{filter:saturate(.9) contrast(1.05) brightness(.88);transform:scale(1.01);animation:introDrift 18s ease-in-out infinite alternate;object-position:center 34%}
+.intro-stage--poster::after{background:linear-gradient(90deg,rgba(2,3,5,.18) 0%,rgba(2,3,5,.06) 45%,rgba(2,3,5,.08) 100%),radial-gradient(circle at 78% 30%,rgba(214,179,106,.08),transparent 20%)}
+@media (min-width:821px){
+  .intro-stage--poster .intro-overlay{position:absolute;inset:0;width:100%;margin:0;display:block;pointer-events:none}
+  .intro-stage--poster .overline,.intro-stage--poster .intro-overlay h1,.intro-stage--poster .intro-copy{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .intro-stage--poster .intro-enter{position:absolute;left:6.4%;bottom:15.8%;width:min(32vw,560px);height:clamp(94px,10.8vw,136px);padding:0;border:0;background:transparent;box-shadow:none;color:transparent;pointer-events:auto;border-radius:18px;min-width:0}
+  .intro-stage--poster .intro-enter span,.intro-stage--poster .intro-enter small{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .intro-stage--poster .intro-enter:focus-visible{outline:2px solid rgba(214,179,106,.92);outline-offset:6px;box-shadow:0 0 0 8px rgba(217,111,122,.22)}
+}
+@media (max-width:820px){
+  .intro-stage--poster .intro-art--poster{object-position:68% center;filter:saturate(.82) contrast(1.02) brightness(.58)}
+  .intro-stage--poster::after{background:linear-gradient(180deg,rgba(2,3,5,.18) 0%,rgba(2,3,5,.56) 42%,rgba(2,3,5,.92) 100%),linear-gradient(90deg,rgba(2,3,5,.88) 0%,rgba(2,3,5,.52) 36%,rgba(2,3,5,.16) 100%)}
+}
 
 /* NIGHTMARE 404 v3.2 — DIRECTOR'S CUT */
 .director-note{margin-top:1rem;padding:.8rem 1rem;border-left:2px solid var(--gold);background:rgba(214,179,106,.045);color:#aab5ba;font-size:.78rem;letter-spacing:.035em}
@@ -97,16 +111,16 @@ body.reduce-motion .event-art img,body.reduce-motion .entity-visual--premium,bod
 /* Dirección ambiental específica: un lenguaje de movimiento por localización. */
 .scene--block .scene-alive span:nth-child(1){width:18%;height:58%;left:41%;top:25%;border:1px solid rgba(198,144,88,.16);background:linear-gradient(90deg,rgba(1,3,4,.9) 0 47%,rgba(198,144,88,.13) 48% 52%,rgba(1,3,4,.9) 53%);animation:dcElevator 7.5s cubic-bezier(.6,0,.25,1) infinite}
 .scene--block .scene-alive span:nth-child(2){background:repeating-linear-gradient(90deg,transparent 0 6%,rgba(220,230,230,.035) 6.4% 6.9%,transparent 7.3% 13%);animation:dcRain 1.4s linear infinite}
-.scene--hospital .scene-light{background:linear-gradient(180deg,rgba(210,255,239,.12),transparent 12%);animation:dcFluorescent 6.8s steps(1,end) infinite}
+.scene--hospital .scene-light{background:linear-gradient(180deg,rgba(210,255,239,.12),transparent 12%);animation:dcFluorescent 11.5s ease-in-out infinite}
 .scene--hospital .scene-alive span:nth-child(1){inset:14% 8% 42%;background:repeating-linear-gradient(90deg,transparent 0 9%,rgba(160,233,212,.055) 9.4% 10%,transparent 10.4% 20%);animation:dcWard 9s ease-in-out infinite}
 .scene--forest .scene-fog{animation:dcFog 13s ease-in-out infinite alternate}.scene--forest .scene-alive span:nth-child(2){inset:-12% -5% 38%;background:repeating-linear-gradient(112deg,transparent 0 8%,rgba(5,8,5,.75) 8.4% 9.2%,transparent 9.6% 16%);transform-origin:top;animation:dcBranches 8s ease-in-out infinite alternate}
 .scene--mansion .scene-light{background:radial-gradient(circle at 34% 58%,rgba(224,169,91,.16),transparent 8%),radial-gradient(circle at 68% 54%,rgba(224,169,91,.11),transparent 7%);animation:dcCandles 2.8s ease-in-out infinite alternate}
 .scene--mansion .scene-alive span:nth-child(1){inset:17% 12% 38%;border:1px solid rgba(151,119,177,.08);box-shadow:inset 0 0 45px rgba(0,0,0,.8);animation:dcFrames 11s ease-in-out infinite alternate}
-.scene--nexus .scene-grid{animation:dcGeometry 12s linear infinite}.scene--nexus .scene-glow{animation:dcPulse 4.4s ease-in-out infinite}.scene--nexus .scene-chromatic{animation:dcChromatic 3.8s steps(2,end) infinite}
+.scene--nexus .scene-grid{animation:dcGeometry 12s linear infinite}.scene--nexus .scene-glow{animation:dcPulse 4.4s ease-in-out infinite}.scene--nexus .scene-chromatic{animation:dcChromatic 7s ease-in-out infinite}
 
 @keyframes dcElevator{0%,30%,100%{transform:scaleX(1);opacity:.34}42%,58%{transform:scaleX(.08);opacity:.68}70%{transform:scaleX(1);opacity:.25}}
 @keyframes dcRain{to{transform:translateY(11%)}}
-@keyframes dcFluorescent{0%,7%,10%,63%,66%,100%{opacity:.82}8%,9%,64%,65%{opacity:.18}}
+@keyframes dcFluorescent{0%,68%,100%{opacity:.74}72%{opacity:.48}76%{opacity:.68}80%{opacity:.54}}
 @keyframes dcWard{0%,100%{transform:translateX(-1%);opacity:.25}50%{transform:translateX(2%);opacity:.48}}
 @keyframes dcFog{0%{transform:translateX(-3%) scale(1.03);opacity:.5}100%{transform:translateX(4%) scale(1.08);opacity:.78}}
 @keyframes dcBranches{0%{transform:skewX(-1deg) rotate(-.25deg)}100%{transform:skewX(1.5deg) rotate(.35deg)}}
@@ -119,7 +133,7 @@ body.reduce-motion .event-art img,body.reduce-motion .entity-visual--premium,bod
 /* Jefes: reposo/contacto → fractura → fase crítica. */
 .game-dialog[data-boss-phase="engaged"] .entity-visual--boss{animation:dcBossIdle 4.6s ease-in-out infinite}
 .game-dialog[data-boss-phase="wounded"] .entity-visual--boss{animation:dcBossWounded 2.1s ease-in-out infinite}.game-dialog[data-boss-phase="wounded"] .boss-layer--sigil{opacity:.72;animation:dcSigil 3.6s linear infinite}
-.game-dialog[data-boss-phase="critical"] .entity-visual--boss{animation:dcBossCritical .86s steps(2,end) infinite}.game-dialog[data-boss-phase="critical"] .enemy-hp{box-shadow:0 0 26px rgba(200,39,61,.36)}.game-dialog[data-boss-phase="critical"] .boss-layer--sigil{opacity:1;animation:dcSigil 1.9s linear infinite reverse}
+.game-dialog[data-boss-phase="critical"] .entity-visual--boss{animation:dcBossCritical 1.8s ease-in-out infinite}.game-dialog[data-boss-phase="critical"] .enemy-hp{box-shadow:0 0 26px rgba(200,39,61,.36)}.game-dialog[data-boss-phase="critical"] .boss-layer--sigil{opacity:1;animation:dcSigil 3.1s linear infinite reverse}
 @keyframes dcBossIdle{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.012)}}
 @keyframes dcBossWounded{0%,100%{transform:translateX(0) rotate(0)}45%{transform:translateX(-2px) rotate(-.25deg)}55%{transform:translateX(2px) rotate(.25deg)}}
 @keyframes dcBossCritical{0%{transform:translate(-1px,0) scale(1.015);filter:drop-shadow(2px 0 rgba(200,39,61,.35))}50%{transform:translate(2px,-1px) scale(1.025);filter:drop-shadow(-2px 0 rgba(126,215,187,.3))}}
