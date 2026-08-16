@@ -1,5 +1,5 @@
 window.N404_DATA = {
-  "version": "3.2.0",
+  "version": "3.6.0",
   "balance": {
     "startSignal": 7,
     "signalExplore": 3,

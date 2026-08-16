@@ -1,4 +1,4 @@
-# Informe de equilibrio — Nightmare 404 v3.2.0 Director's Cut
+# Informe de equilibrio — Nightmare 404 v3.6.0 Director's Cut
 
 
 > **Verificación v3.1 Premium:** el motor de equilibrio no cambia. La ejecución final `4000 --ci` simuló 36.000 campañas; la estrategia mixta quedó en 37,7–39,3 % y el conjunto de combinaciones en 30,5–50,4 %.
@@ -33,7 +33,7 @@ Se simulan 4.000 campañas por combinación de investigador y estrategia de reso
 
 La ruta de conocimiento sigue siendo la más dura, especialmente para Lucía, pero permanece dentro del rango aceptado. Sellos es la vía más segura. La estrategia mixta queda muy agrupada entre los tres investigadores, lo que reduce la probabilidad de que una elección de personaje condene la campaña.
 
-La v3.2.0 no modifica números de combate ni economía respecto a la base equilibrada anterior; los cambios de esta versión son de dirección, audio, UX, persistencia, PWA y documentación.
+La v3.6.0 no modifica números de combate ni economía respecto a la base equilibrada anterior; los cambios de esta versión son de dirección, audio, UX, persistencia, PWA y documentación.
 
 ## Límite de la simulación
 

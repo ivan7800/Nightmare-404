@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#08090c">
-  <meta name="description" content="Nightmare 404 v3.2.0 — Director's Cut: horror cósmico web con dirección contextual por escenario, jefes por fases, audio adaptativo, cierre cinematográfico y PWA offline.">
+  <meta name="description" content="Nightmare 404 v3.6.0 — Director's Cut: horror cósmico web con nueva portada final cinematográfica, logo integrado, audio adaptativo, cierre cinematográfico y PWA offline.">
   <meta name="color-scheme" content="dark">
   <meta name="application-name" content="Nightmare 404">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,11 +18,11 @@
   <meta property="og:title" content="Nightmare 404 — Cosmic Descent">
   <meta property="og:description" content="Survival horror cósmico local-first con arte original de jefes, eventos ilustrados, mezcla de audio por canales, campaña completa y PWA offline.">
   <meta property="og:url" content="https://ivan7800.github.io/Nightmare-404/">
-  <meta property="og:image" content="https://ivan7800.github.io/Nightmare-404/assets/images/menu-hero.webp">
+  <meta property="og:image" content="https://ivan7800.github.io/Nightmare-404/assets/images/intro-hero-final.webp">
   <meta name="twitter:card" content="summary_large_image">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-  <title>Nightmare 404 — Director's Cut v3.2.0</title>
-  <link rel="preload" href="assets/images/menu-hero.webp" as="image" type="image/webp">
+  <title>Nightmare 404 — Director's Cut v3.6.0</title>
+  <link rel="preload" href="assets/images/intro-hero-final.webp" as="image" type="image/webp">
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
@@ -44,8 +44,8 @@
 
   <main id="main-content" class="app-shell" tabindex="-1">
     <section id="screen-intro" class="screen screen--active intro-screen" aria-labelledby="intro-title" aria-hidden="false">
-      <div class="intro-stage">
-        <img src="assets/art/prologue/signal.svg" alt="Black Hollow bajo la transmisión 404" class="intro-art" width="1600" height="900" decoding="async" fetchpriority="high">
+      <div class="intro-stage intro-stage--poster">
+        <img src="assets/images/intro-hero-final.webp" alt="Pantalla principal cinematográfica de Nightmare 404 con el portal y el emblema Universo 404" class="intro-art intro-art--poster" width="1448" height="1086" decoding="async" fetchpriority="high">
         <div class="intro-overlay">
           <p class="overline">BLACK HOLLOW · 04:04</p>
           <h1 id="intro-title"><span>NIGHTMARE</span><strong>404</strong></h1>
@@ -67,7 +67,7 @@
         <div class="menu-interface">
           <header class="system-strip">
             <span class="system-strip__signal"><i aria-hidden="true"></i> SEÑAL <b id="menu-signal">ESTABLE</b></span>
-            <span>DIRECTOR'S CUT · v3.2.0</span>
+            <span>DIRECTOR'S CUT · v3.6.0</span>
           </header>
 
           <div class="menu-brand">
@@ -81,7 +81,30 @@
 
           <p class="menu-premise">Cinco anomalías laten bajo Black Hollow como órganos de una inteligencia oceánica y antigua. Investiga, sobrevive y decide cuánto abismo puede tolerar la ciudad antes de mirarte de vuelta.</p>
 
-          <nav class="main-menu" aria-label="Menú principal">
+          <section class="menu-curator" aria-label="Panel editorial del incidente">
+            <article class="transmission-card transmission-card--story glass-panel">
+              <p class="panel-kicker">TRANSMISIÓN RECUPERADA</p>
+              <h2>La ciudad no pide ayuda. Está llamando a algo.</h2>
+              <p>Una campaña cerrada de horror cósmico con cinco expedientes, jefes por fases, decisiones de contención o conocimiento y finales que reaccionan a tu descenso.</p>
+              <div class="mini-stat-grid" aria-label="Resumen de campaña">
+                <span><small>CASOS</small><b>05</b></span>
+                <span><small>JEFES</small><b>05</b></span>
+                <span><small>FINALES</small><b>04</b></span>
+                <span><small>LOGROS</small><b>12</b></span>
+              </div>
+            </article>
+            <article class="transmission-card transmission-card--intel glass-panel">
+              <p class="panel-kicker">ESTADO DE RELEASE</p>
+              <ul class="transmission-list">
+                <li><b>LOCAL-FIRST</b><span>Guardado, recuperación y progreso sin backend</span></li>
+                <li><b>PWA</b><span>Instalable, offline y pensada para GitHub Pages</span></li>
+                <li><b>DIRECCIÓN</b><span>Audio adaptativo, codex visual y cierre cinematográfico</span></li>
+              </ul>
+            </article>
+          </section>
+
+          <div class="menu-grid">
+            <nav class="main-menu" aria-label="Menú principal">
             <button type="button" data-action="new-game">
               <span class="menu-command">01</span><span><b>Nueva campaña</b><small>Elige investigador y abre el primer expediente</small></span><i aria-hidden="true">→</i>
             </button>
@@ -106,7 +129,29 @@
             <button type="button" data-action="transmissions">
               <span class="menu-command">08</span><span><b>Sala de transmisiones</b><small>Ambientes, leitmotivs y ecos recuperados</small></span><i aria-hidden="true">→</i>
             </button>
-          </nav>
+            </nav>
+
+            <aside class="menu-aside" aria-label="Panel de campaña">
+              <article class="menu-aside-card glass-panel">
+                <p class="panel-kicker">DOSSIER</p>
+                <h3>Black Hollow · incidente 04:04</h3>
+                <p>Todo empieza en el Bloque 404, pero las cuatro heridas exteriores convergen en una sola inteligencia sumergida.</p>
+                <div class="menu-chip-row">
+                  <span>Horror cósmico</span>
+                  <span>Psicológico</span>
+                  <span>No lineal</span>
+                </div>
+              </article>
+              <article class="menu-aside-card menu-aside-card--accent glass-panel">
+                <p class="panel-kicker">RECOMENDADO</p>
+                <ul class="aside-checklist">
+                  <li>Auriculares y luz baja</li>
+                  <li>Sesiones de 45–90 min</li>
+                  <li>Juega con la interfaz completa</li>
+                </ul>
+              </article>
+            </aside>
+          </div>
 
           <footer class="menu-footer">
             <div><span>CAMPAÑA COMPLETA</span><b>5 casos · 5 jefes por fases · 4 finales · 12 logros · codex y estadísticas</b></div>
@@ -126,8 +171,45 @@
         </div>
         <span class="header-code" aria-hidden="true">N404 / 01</span>
       </header>
-      <div id="character-grid" class="character-grid"></div>
-      <p class="help-text"><span aria-hidden="true">◇</span> La campaña completa puede terminarse con cualquiera de los tres investigadores.</p>
+      <section class="character-command glass-panel" aria-label="Panel de reclutamiento">
+        <div class="character-command__copy">
+          <p class="eyebrow">RECLUTAMIENTO · INCIDENTE 04:04</p>
+          <h3>Elige el perfil que definirá tu descenso</h3>
+          <p>Cada investigador altera el ritmo, la forma de resistir y el modo en que leerás Black Hollow. No se trata solo de estadísticas: eliges una filosofía para enfrentarte al abismo.</p>
+        </div>
+        <div class="character-command__metrics">
+          <span><small>PERFILES</small><b>03</b></span>
+          <span><small>CAMPAÑA</small><b>COMPLETA</b></span>
+          <span><small>ENFOQUE</small><b>SUPERVIVENCIA</b></span>
+        </div>
+      </section>
+
+      <div class="character-stage">
+        <div class="character-stage__main">
+          <div id="character-grid" class="character-grid"></div>
+          <p class="help-text"><span aria-hidden="true">◇</span> La campaña completa puede terminarse con cualquiera de los tres investigadores.</p>
+        </div>
+        <aside class="character-stage__side" aria-label="Dossier de reclutamiento">
+          <article class="character-sidecard glass-panel">
+            <p class="panel-kicker">DOSSIER OPERATIVO</p>
+            <h3>Lucía, Gabriel y Noa no juegan igual</h3>
+            <p>La periodista resiste mejor la presión narrativa, el exorcista domina a las entidades espirituales y la hacker manipula la Señal con más agresividad táctica.</p>
+            <div class="character-sidecard__tags">
+              <span>Investigación</span>
+              <span>Control</span>
+              <span>Combate</span>
+            </div>
+          </article>
+          <article class="character-sidecard character-sidecard--accent glass-panel">
+            <p class="panel-kicker">RECOMENDACIÓN</p>
+            <ul class="character-checklist">
+              <li>Si quieres equilibrio, empieza por Lucía.</li>
+              <li>Si prefieres pegada espiritual, usa a Gabriel.</li>
+              <li>Si te atrae el riesgo y la Señal, elige a Noa.</li>
+            </ul>
+          </article>
+        </aside>
+      </div>
     </section>
 
     <section id="screen-map" class="screen map-screen" aria-labelledby="map-title" aria-hidden="true">
@@ -156,19 +238,57 @@
         </div>
       </header>
 
-      <div id="case-grid" class="case-grid"></div>
-
-      <section class="campaign-brief glass-panel">
-        <div class="campaign-brief__copy">
-          <p class="eyebrow">LITURGIA INTERCEPTADA</p>
-          <h3 id="brief-title">La ciudad sigue transmitiendo</h3>
-          <p id="brief-copy">Cuatro heridas rodean Black Hollow. Resolverlas revelará si la pesadilla es un mensaje o una invitación.</p>
+      <section class="campaign-command glass-panel" aria-label="Panel del incidente 04:04">
+        <div class="campaign-command__copy">
+          <p class="eyebrow">PANEL DEL INCIDENTE · 04:04</p>
+          <h3 id="command-title">La frecuencia busca una forma de entrar</h3>
+          <p id="command-copy">Cada expediente resuelto altera el equilibrio entre contención y conocimiento. El Nexo no es el final de la ruta: es la suma de todas las decisiones anteriores.</p>
         </div>
-        <div>
-          <p class="weather-heading">PRONÓSTICO DE INTERFERENCIA</p>
-          <div id="weather-report" class="weather-report"></div>
+        <div class="command-metrics" aria-label="Lectura de campaña">
+          <span><small>PRESIÓN</small><b id="map-pressure">BAJA</b></span>
+          <span><small>DOCTRINA</small><b id="map-doctrine">MIXTA</b></span>
+          <span><small>PROTOCOLO</small><b id="map-protocol">EVALUAR FOCOS</b></span>
         </div>
       </section>
+
+      <div class="campaign-stage">
+        <div class="campaign-stage__main">
+          <div id="case-grid" class="case-grid"></div>
+
+          <section class="campaign-brief glass-panel">
+            <div class="campaign-brief__copy">
+              <p class="eyebrow">LITURGIA INTERCEPTADA</p>
+              <h3 id="brief-title">La ciudad sigue transmitiendo</h3>
+              <p id="brief-copy">Cuatro heridas rodean Black Hollow. Resolverlas revelará si la pesadilla es un mensaje o una invitación.</p>
+            </div>
+            <div>
+              <p class="weather-heading">PRONÓSTICO DE INTERFERENCIA</p>
+              <div id="weather-report" class="weather-report"></div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="campaign-stage__side" aria-label="Dossier operativo">
+          <article class="campaign-sidecard glass-panel">
+            <p class="panel-kicker">LECTURA ACTUAL</p>
+            <h3 id="insight-title">Black Hollow todavía puede contenerse</h3>
+            <p id="insight-copy">Resuelve anomalías exteriores para reunir sellos, conocimiento y contexto antes de descender a la Señal Madre.</p>
+            <div class="campaign-sidecard__tags">
+              <span id="insight-tag-a">Contención</span>
+              <span id="insight-tag-b">Investigación</span>
+              <span id="insight-tag-c">Señal</span>
+            </div>
+          </article>
+          <article class="campaign-sidecard campaign-sidecard--accent glass-panel">
+            <p class="panel-kicker">RECOMENDACIÓN DE RUTA</p>
+            <ul class="campaign-checklist">
+              <li>Observa la presión de Señal antes de abrir otro frente.</li>
+              <li>Alterna exploración y descanso para no romper la cordura.</li>
+              <li>El Nexo 404 solo merece abrirse cuando la ciudad ya te ha contado su patrón.</li>
+            </ul>
+          </article>
+        </aside>
+      </div>
     </section>
 
     <section id="screen-game" class="screen game-screen" aria-labelledby="location-title" aria-hidden="true">
@@ -189,6 +309,19 @@
         <div class="hud-stat"><span>PISTAS</span><strong id="clue-value">0/4</strong></div>
         <button type="button" class="ghost-button" id="pause-btn" aria-haspopup="dialog">Pausa</button>
       </header>
+
+      <section class="game-command glass-panel" aria-label="Panel táctico del umbral">
+        <div class="game-command__copy">
+          <p class="eyebrow">LECTURA TÁCTICA · UMBRAL ACTIVO</p>
+          <h3 id="game-command-title">Mantén el equilibrio antes de forzar el foco</h3>
+          <p id="game-command-copy">Explora, investiga y regula el desgaste. La mejor ruta no siempre es la más rápida: a veces consiste en llegar al boss con el cuerpo y la mente todavía útiles.</p>
+        </div>
+        <div class="game-command__metrics">
+          <span><small>AMENAZA</small><b id="game-threat">ESTABLE</b></span>
+          <span><small>POSTURA</small><b id="game-posture">RECONOCER</b></span>
+          <span><small>VENTANA</small><b id="game-window">ABIERTA</b></span>
+        </div>
+      </section>
 
       <div class="game-layout">
         <section class="scene-panel glass-panel">
@@ -221,10 +354,24 @@
         </section>
 
         <aside class="side-panel glass-panel">
-          <section class="mission-card">
+          <section class="mission-card mission-card--hero">
             <p class="panel-kicker">MANDATO DEL UMBRAL</p>
             <h3>Objetivo</h3>
             <p id="objective-text">Reúne pistas y encuentra el foco de la anomalía.</p>
+            <div class="mission-tags">
+              <span id="mission-tag-a">Investigar</span>
+              <span id="mission-tag-b">Resistir</span>
+              <span id="mission-tag-c">Cerrar</span>
+            </div>
+          </section>
+          <section class="telemetry-card">
+            <div class="panel-title"><h3>Lectura táctica</h3><span>SEÑAL 404</span></div>
+            <div class="telemetry-grid">
+              <span><small>PULSO</small><b id="telemetry-pulse">CONTROLADO</b></span>
+              <span><small>RUTA</small><b id="telemetry-route">EXPLORAR</b></span>
+              <span><small>RIESGO</small><b id="telemetry-risk">BAJO</b></span>
+              <span><small>FOCO</small><b id="telemetry-focus">ABIERTO</b></span>
+            </div>
           </section>
           <section>
             <div class="panel-title"><h3>Equipo</h3><span id="inventory-count">0/6</span></div>
@@ -247,11 +394,17 @@
     </section>
 
     <section id="screen-info" class="screen dossier-screen" aria-labelledby="info-title" aria-hidden="true">
-      <header class="screen-header screen-header--hero">
+      <header class="screen-header screen-header--hero info-header">
         <button type="button" class="ghost-button" data-back="menu">← Menú</button>
         <div><p class="eyebrow" id="info-eyebrow">ARCHIVO</p><h2 id="info-title">Archivo</h2><p>Documentación recuperada de la frecuencia 404.</p></div>
         <span class="header-code" aria-hidden="true">N404 / DB</span>
       </header>
+      <nav class="codex-nav glass-panel" aria-label="Secciones del Archivo 404">
+        <button type="button" data-info-action="archive"><span>01</span><b>Archivo</b><small>Evidencias</small></button>
+        <button type="button" data-info-action="gallery"><span>02</span><b>Codex visual</b><small>Arte recuperado</small></button>
+        <button type="button" data-info-action="achievements"><span>03</span><b>Progreso</b><small>Logros y finales</small></button>
+        <button type="button" data-info-action="transmissions"><span>04</span><b>Transmisiones</b><small>Audio y leitmotivs</small></button>
+      </nav>
       <div id="info-content" class="info-content glass-panel"></div>
     </section>
   </main>

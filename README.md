@@ -1,8 +1,8 @@
-# NIGHTMARE 404 v3.2.0 — DIRECTOR'S CUT
+# NIGHTMARE 404 v3.6.0 — DEFINITIVE EDITION
 
 PWA estática/local-first de horror cósmico e investigación ambientada en Black Hollow. Esta edición evoluciona v3.1 sin convertir el proyecto en una colección de efectos: prioriza dirección de escena, ritmo, audio adaptativo, recuperación de partida y cierre de campaña.
 
-## Qué cambia en v3.2
+## Qué incluye la Definitive Edition
 
 - Dirección ambiental diferenciada para Bloque 404, Hospital Saint Mercy, Raven Woods, Mansión Ashcroft y Nexo 404.
 - Cinco jefes con presentación y fases visuales de contacto, fractura y estado crítico.
@@ -12,7 +12,11 @@ PWA estática/local-first de horror cósmico e investigación ambientada en Blac
 - Codex visual con prólogo, expedientes, eventos, jefes y finales.
 - Recuperación automática desde el snapshot local válido anterior si el guardado principal queda corrupto/incompatible.
 - `prefers-reduced-motion` respetado desde la primera ejecución y opción manual de reducción de movimiento.
-- PWA con caché `v3.2.0`, limpieza de cachés antiguas y aviso cuando una actualización queda preparada.
+- PWA con caché `v3.6.0`, limpieza de cachés antiguas y aviso cuando una actualización queda preparada.
+- Portada principal final con composición cinematográfica y emblema Universo 404 integrado.
+- Menú, selección de personaje, mapa/casos, HUD, combate y Codex con un lenguaje visual premium coherente.
+- Archivo 404 reorganizado como sistema editorial con métricas, secciones, bloqueos y navegación interna.
+- Codex visual, progreso y Sala de transmisiones rematados con presentación de edición definitiva.
 
 ## Contenido
 
