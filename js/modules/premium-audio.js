@@ -28,6 +28,7 @@
   const sceneAmbient = Object.freeze({ menu: "menu", block: "rain", hospital: "hospital", forest: "forest", mansion: "mansion", nexus: "nexus" });
   let ambient = null;
   let music = null;
+  let motifTimer = 0;
 
   function makeAudio(key, { loop = false, volume = .35 } = {}) {
     const src = FILES[key];
@@ -75,9 +76,27 @@
 
   function stopMusic() { music = stopNode(music); }
 
-  function setMix({ ambientVolume, musicVolume } = {}) {
+  function setMix({ ambientVolume, musicVolume, playbackRate } = {}) {
     if (ambient && Number.isFinite(ambientVolume)) ambient.volume = Math.max(0, Math.min(1, ambientVolume));
     if (music && Number.isFinite(musicVolume)) music.volume = Math.max(0, Math.min(1, musicVolume));
+    if (music && Number.isFinite(playbackRate)) music.playbackRate = Math.max(.88, Math.min(1.08, playbackRate));
+  }
+
+  function adaptiveMix({ sanity = 1, signal = 0, danger = 0, boss = false } = {}) {
+    const pressure = Math.max(0, Math.min(1, Math.max(signal, 1 - sanity, danger)));
+    setMix({
+      ambientVolume: .15 + pressure * .18,
+      musicVolume: (boss ? .15 : .065) + pressure * (boss ? .12 : .08),
+      playbackRate: 1 - pressure * .045
+    });
+  }
+
+  function playLeitmotif(scene, phase = "engaged") {
+    window.clearTimeout(motifTimer);
+    const cue = { block: "caseBlock", hospital: "caseHospital", forest: "caseForest", mansion: "caseMansion", nexus: "caseNexus" }[scene] || "anomalyStinger";
+    const suffix = phase === "critical" ? [cue, "impact", "whisper"] : phase === "wounded" ? [cue, "bell"] : [cue];
+    playSequence(suffix, phase === "critical" ? .28 : .19, phase === "critical" ? 260 : 420);
+    motifTimer = window.setTimeout(() => {}, 1200);
   }
 
 
@@ -92,5 +111,5 @@
     return () => { window.clearTimeout(timer); stopAmbient(); };
   }
 
-  window.N404_PREMIUM_AUDIO = Object.freeze({ FILES, play, playSequence, previewScene, startAmbient, stopAmbient, startMusic, stopMusic, setMix });
+  window.N404_PREMIUM_AUDIO = Object.freeze({ FILES, play, playSequence, previewScene, startAmbient, stopAmbient, startMusic, stopMusic, setMix, adaptiveMix, playLeitmotif });
 })();

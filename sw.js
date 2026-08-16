@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "nightmare-404-";
-const CACHE = `${CACHE_PREFIX}v3.1.0`;
+const CACHE = `${CACHE_PREFIX}v3.2.0`;
 const CORE = [
   "./",
   "./index.html",

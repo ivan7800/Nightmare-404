@@ -1,7 +1,7 @@
 {
-  "name": "Nightmare 404 — Nocturne Edition",
+  "name": "Nightmare 404 — Director's Cut",
   "short_name": "Nightmare 404",
-  "description": "Horror cósmico local-first con prólogo cinematográfico, portadas por expediente, sala de transmisiones, jefes y finales ilustrados, audio local y PWA offline.",
+  "description": "Horror cósmico local-first con capítulos cinematográficos, dirección contextual, jefes por fases, audio adaptativo, codex visual, finales y PWA offline.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

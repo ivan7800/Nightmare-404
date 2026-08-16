@@ -3,12 +3,13 @@
 
   const DATA = window.N404_DATA;
   const SAVE_KEY = "nightmare404.save.v1";
+  const RECOVERY_KEY = "nightmare404.recovery.v1";
   const PROFILE_KEY = "nightmare404.profile.v1";
   const SETTINGS_KEY = "nightmare404.settings.v1";
   const MAX_CONSUMABLES = 6;
   const KEY_KINDS = ["boss", "evidence", "passive"];
   const B = DATA.balance;
-  const SUPPORTED_SAVE_VERSIONS = new Set([DATA.version, "3.0.0", "2.6.0", "2.5.1", "2.5.0", "2.4.0", "2.3.0", "2.2.1", "2.2.0", "2.1.0", "2.0.0", "1.0.0", "1.0.1", "1.1.0", "1.1.1"]);
+  const SUPPORTED_SAVE_VERSIONS = new Set([DATA.version, "3.1.0", "3.0.0", "2.6.0", "2.5.1", "2.5.0", "2.4.0", "2.3.0", "2.2.1", "2.2.0", "2.1.0", "2.0.0", "1.0.0", "1.0.1", "1.1.0", "1.1.1"]);
   const REBALANCED_SAVE_VERSIONS = new Set(["1.0.0", "1.0.1"]);
 
   const VALID_IDS = {
@@ -84,6 +85,9 @@
     }
     if (premiumAudioEnabled("ambient")) audio.startAmbient(scene, .23); else audio.stopAmbient();
     if (premiumAudioEnabled("music")) audio.startMusic(scene === "nexus" ? .18 : .09); else audio.stopMusic();
+    const sanity = state.maxSanity ? state.sanity / state.maxSanity : 1;
+    const danger = currentEnemy ? Math.max(0, 1 - (currentEnemy.hp / (currentEnemy.maxHp || currentEnemy.hp || 1))) : 0;
+    audio.adaptiveMix?.({ sanity, signal: state.signal / 100, danger, boss: Boolean(combatMeta?.boss) });
   }
 
   function playTone({ frequency = 90, duration = .12, type = "sine", volume = .022, slide = 0 } = {}) {
@@ -278,7 +282,7 @@
   const DEFAULT_SETTINGS = {
     sound: true,
     crt: true,
-    reducedMotion: false,
+    reducedMotion: Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches),
     largeText: false,
     highContrast: false,
     anomalies: true,
@@ -473,6 +477,8 @@
 
   function saveGame() {
     if (!state) return;
+    const previous = readJSON(SAVE_KEY, null);
+    if (validSave(previous)) writeJSON(RECOVERY_KEY, previous);
     state.savedAt = new Date().toISOString();
     writeJSON(SAVE_KEY, state);
     updateContinueButton();
@@ -480,6 +486,7 @@
 
   function eraseSave() {
     storageRemove(SAVE_KEY);
+    storageRemove(RECOVERY_KEY);
     state = null;
     currentEnemy = null;
     combatMeta = null;
@@ -533,15 +540,24 @@
   }
 
   function loadGame() {
-    const candidate = readJSON(SAVE_KEY, null);
+    let candidate = readJSON(SAVE_KEY, null);
+    let recovered = false;
     if (!validSave(candidate)) {
-      storageRemove(SAVE_KEY);
-      updateContinueButton();
-      showToast("La partida guardada no es compatible con esta versión.");
-      return;
+      const recovery = readJSON(RECOVERY_KEY, null);
+      if (validSave(recovery)) {
+        candidate = recovery;
+        recovered = true;
+        writeJSON(SAVE_KEY, recovery);
+      } else {
+        storageRemove(SAVE_KEY);
+        updateContinueButton();
+        showToast("La partida guardada no es compatible con esta versión.");
+        return;
+      }
     }
     state = candidate;
     normalizeState();
+    if (recovered) showToast("PARTIDA RECUPERADA DESDE COPIA DE SEGURIDAD");
     if (state.currentCaseId) {
       renderGame();
       showScreen("game");
@@ -887,7 +903,7 @@
     if (caseCue) premiumCue(caseCue, "fx", caseData.scene === "nexus" ? .34 : .24);
     openDialog(`
       <div class="dialog-body case-prelude">
-        <p class="event-kicker">${escapeHTML(nocturne?.label || "EXPEDIENTE 404")} · ${escapeHTML(caseData.location)}</p>
+        <p class="event-kicker">${escapeHTML(nocturne?.chapter || nocturne?.label || "EXPEDIENTE 404")}</p>
         <div class="case-prelude__visual">
           <img class="case-prelude__scene" src="${escapeHTML(sceneImage)}" alt="${escapeHTML(caseData.location)}" loading="eager" decoding="async">
           ${sigil ? `<img class="case-prelude__sigil" src="${escapeHTML(sigil)}" alt="" aria-hidden="true" loading="eager" decoding="async">` : ""}
@@ -895,6 +911,7 @@
         <h2 id="dialog-title">${escapeHTML(caseData.title)}</h2>
         <p class="case-prelude__quote">${escapeHTML(nocturne?.transmission || caseData.tagline)}</p>
         <p>${escapeHTML(caseData.intro)}</p>
+        <p class="director-note"><b>DIRECCIÓN DE ESCENA</b> · ${escapeHTML(nocturne?.direction || "Interferencia localizada.")}</p>
         <div class="dialog-actions">
           <button id="case-prelude-back">Volver al mapa</button>
           <button id="case-prelude-enter">Descender al expediente</button>
@@ -1022,6 +1039,7 @@
     art.dataset.weather = state.weather;
     art.dataset.daypart = daypart;
     art.dataset.alert = alertState;
+    art.dataset.direction = window.N404_NOCTURNE?.cases?.[caseData.id]?.label || "BLACK HOLLOW";
     art.style.setProperty("--scene-accent", SCENE_ACCENTS[caseData.scene] || "#ff5266");
     art.style.setProperty("--signal-intensity", String(signalLevel / 100));
     document.getElementById("scene-code").textContent = caseData.final ? "404" : String(caseData.order).padStart(2, "0");
@@ -1323,10 +1341,19 @@
     }
     updateProfile("enemies", template.id);
     sceneStinger("combat");
+    if (combatMeta.boss && premiumAudioEnabled("fx")) window.N404_PREMIUM_AUDIO?.playLeitmotif?.(getCase()?.scene, "engaged");
     combatPulse(combatMeta.boss ? "boss" : "enter");
     syncCombatState();
     saveGame();
     renderCombat();
+  }
+
+  function bossPhase() {
+    if (!combatMeta?.boss || !currentEnemy) return "engaged";
+    const ratio = currentEnemy.hp / (currentEnemy.maxHp || 1);
+    if (ratio <= .25) return "critical";
+    if (ratio <= .55) return "wounded";
+    return "engaged";
   }
 
   function renderCombat(message = "") {
@@ -1336,10 +1363,17 @@
     syncCombatState();
     saveGame();
     const character = getCharacter();
+    const phase = bossPhase();
+    if (combatMeta.boss) {
+      dialog.dataset.bossPhase = phase;
+      window.N404_PREMIUM_AUDIO?.adaptiveMix?.({ sanity: state.sanity / state.maxSanity, signal: state.signal / 100, danger: 1 - currentEnemy.hp / currentEnemy.maxHp, boss: true });
+    } else {
+      delete dialog.dataset.bossPhase;
+    }
     openDialog(`
-      <div class="dialog-body combat-dialog-body ${combatMeta.boss ? "combat-dialog-body--boss" : ""}">
+      <div class="dialog-body combat-dialog-body ${combatMeta.boss ? "combat-dialog-body--boss" : ""}" data-phase="${phase}">
         ${showBossIntro ? `<div class="boss-cinematic" aria-hidden="true"><span>ANOMALÍA MAYOR DETECTADA</span>${entityVisualMarkup(currentEnemy, true)}<strong>${escapeHTML(currentEnemy.name)}</strong><i>FRECUENCIA ${String(state.signal).padStart(2, "0")} / 404</i></div>` : ""}
-        <p class="event-kicker">${combatMeta.boss ? "JEFE DE ANOMALÍA" : "ENCUENTRO"} · ${escapeHTML(getWeather().name)}</p>
+        <p class="event-kicker">${combatMeta.boss ? `JEFE DE ANOMALÍA · ${escapeHTML(window.N404_NOCTURNE?.bossPhases?.[phase] || phase.toUpperCase())}` : "ENCUENTRO"} · ${escapeHTML(getWeather().name)}</p>
         <div class="enemy-card ${combatMeta.boss ? "enemy-card--boss" : ""}">
           <div class="enemy-stage">${entityVisualMarkup(currentEnemy, combatMeta.boss)}<div class="enemy-hp"><span style="width:${Math.max(0, currentEnemy.hp) / currentEnemy.maxHp * 100}%"></span></div></div>
           <div>
@@ -1373,7 +1407,10 @@
       let damage = state.power + randomInt(0, B.playerDamageBonusMax) + combatMeta.boost;
       combatMeta.boost = 0;
       if (character.passiveKey === "spiritDamage" && currentEnemy.type === "spirit") damage += 3;
+      const previousPhase = bossPhase();
       currentEnemy.hp -= damage;
+      const nextPhase = bossPhase();
+      if (combatMeta.boss && nextPhase !== previousPhase && premiumAudioEnabled("fx")) window.N404_PREMIUM_AUDIO?.playLeitmotif?.(getCase()?.scene, nextPhase);
       combatPulse("hit");
       premiumCue("impact", "fx", .28);
       beep(78, 0.08, "fx");
@@ -1613,7 +1650,7 @@
         <p class="event-kicker">EXPEDIENTE CERRADO</p>
         <h2 id="dialog-title">${escapeHTML(finishedTitle)}</h2>
         <p>${escapeHTML(choice.result)}</p>
-        <p><b>Estado de campaña:</b> ${state.seals} sello(s), ${state.knowledge} conocimiento, ${state.signal}% de Señal.</p>
+        <div class="chapter-summary" aria-label="Resumen del capítulo"><span><small>SELLOS</small><b>${state.seals}</b></span><span><small>CONOCIMIENTO</small><b>${state.knowledge}</b></span><span><small>SEÑAL</small><b>${state.signal}%</b></span><span><small>BAJAS</small><b>${state.totalKills}</b></span></div>
         <div class="dialog-actions"><button id="resolution-map">Volver al mapa</button></div>
       </div>
     `);
@@ -1698,7 +1735,19 @@
     progress.resolution = endingId;
     if (!state.completedCases.includes("nexus")) state.completedCases.push("nexus");
     updateProfile("cases", "nexus");
+    const elapsedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(state.startedAt || new Date().toISOString())) / 60000));
+    const campaignStats = {
+      elapsedMinutes,
+      kills: state.totalKills,
+      rests: state.totalRests,
+      signal: state.signal,
+      seals: state.seals,
+      knowledge: state.knowledge,
+      corruption: state.corruption,
+      cases: state.completedCases.length
+    };
     storageRemove(SAVE_KEY);
+    storageRemove(RECOVERY_KEY);
 
     const epilogue = character.id === "lucia"
       ? "Lucía publica el reportaje bajo un titular imposible. Algunas copias solo muestran una página en blanco."
@@ -1716,6 +1765,15 @@
         <p>${escapeHTML(ending.text)}</p>
         <p>${escapeHTML(epilogue)}</p>
         <p><b>CAMPAÑA COMPLETADA</b></p>
+        <div class="campaign-final-stats" aria-label="Estadísticas finales">
+          <span><small>TIEMPO REAL</small><b>${campaignStats.elapsedMinutes} min</b></span>
+          <span><small>ENTIDADES</small><b>${campaignStats.kills}</b></span>
+          <span><small>DESCANSOS</small><b>${campaignStats.rests}</b></span>
+          <span><small>SEÑAL FINAL</small><b>${campaignStats.signal}%</b></span>
+          <span><small>SELLOS / SABER</small><b>${campaignStats.seals} / ${campaignStats.knowledge}</b></span>
+          <span><small>CORRUPCIÓN</small><b>${campaignStats.corruption}</b></span>
+        </div>
+        <p class="director-credit">NIGHTMARE 404 · DIRECTOR'S CUT · FIN DE TRANSMISIÓN</p>
         <div class="dialog-actions"><button id="ending-menu">Volver al menú principal</button></div>
       </div>
     `);
@@ -1999,7 +2057,7 @@
       </article>`;
   }).join("");
   content.innerHTML = `
-    <p>La Nocturne Edition reúne la dirección visual del proyecto en una galería coherente, sin convertir la interfaz en una colección de efectos.</p>
+    <p>Director's Cut convierte la galería en un codex visual: cada pieza pertenece a un expediente, entidad, evento o desenlace concreto.</p>
     <h3>Prólogo</h3><div class="info-grid">${prologueCards}</div>
     <h3>Emblemas de expediente</h3><div class="info-grid">${caseArtCards}</div>
     <h3>Eventos ilustrados</h3><div class="info-grid">${eventArtCards}</div>
@@ -2007,7 +2065,7 @@
     <h3>Finales ilustrados</h3><div class="info-grid">${endingCards}</div>
   `;
     } else if (kind === "transmissions") {
-      eyebrow.textContent = "NOCTURNE AUDIO ROOM";
+      eyebrow.textContent = "DIRECTOR'S CUT · AUDIO ROOM";
       title.textContent = "Sala de transmisiones";
       const cards = DATA.cases.map(caseData => {
         const meta = window.N404_NOCTURNE?.cases?.[caseData.id];
@@ -2022,7 +2080,7 @@
           </article>`;
       }).join("");
       content.innerHTML = `
-        <p>Previsualiza los paisajes sonoros recuperados sin iniciar una campaña. Los expedientes permanecen bloqueados hasta que has entrado en ellos o los has resuelto.</p>
+        <p>Previsualiza los paisajes sonoros recuperados sin iniciar una campaña. Los expedientes permanecen bloqueados hasta que has entrado en ellos o los has resuelto. Cada transmisión utiliza el paisaje local y sus motivos de peligro.</p>
         <div class="transmission-toolbar"><button type="button" class="ghost-button" id="transmission-stop">Detener audio</button></div>
         <div class="info-grid transmission-grid">${cards}</div>
       `;
@@ -2044,7 +2102,7 @@
       title.textContent = "Créditos";
       content.innerHTML = `
         <div class="info-grid">
-          <article class="info-card unlocked"><h3>Nightmare 404 Nocturne Edition v3.1.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Nocturne Edition con pantalla de transmisión, portadas ilustradas por caso, stingers de audio por escenario, prólogo, galería y finales ilustrados, compatible con GitHub Pages.</p></article>
+          <article class="info-card unlocked"><h3>Nightmare 404 Director's Cut v3.2.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Director's Cut con dirección contextual por escenario, jefes por fases, mezcla sonora adaptativa, capítulos, codex, estadísticas finales, recuperación de partida y PWA compatible con GitHub Pages.</p></article>
           <article class="info-card"><h3>Contenido</h3><p>Bloque 404, Hospital Saint Mercy, Bosque Raven Woods, Mansión Ashcroft y Nexo 404.</p><p>30 eventos narrativos, 20 enemigos, 5 jefes y 4 finales principales.</p></article>
           <article class="info-card"><h3>Identidad visual</h3><p>Icono Universo 404 aportado por el autor e integrado como símbolo central de la historia.</p><p>Dirección visual remasterizada: terror cinematográfico, expediente analógico, CRT y señal degradada.</p></article>
           <article class="info-card"><h3>Tecnología</h3><p>HTML5, CSS3, JavaScript, Web Audio API, audio HTML5 local, LocalStorage y Service Worker.</p><p>Sin librerías, rastreadores ni dependencias externas en ejecución.</p></article>
@@ -2312,9 +2370,20 @@ function showPrologue() {
 
   function registerServiceWorker() {
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => {
-        console.warn("No se pudo registrar el Service Worker de Nightmare 404.", error);
-      }));
+      window.addEventListener("load", async () => {
+        try {
+          const registration = await navigator.serviceWorker.register("./sw.js");
+          registration.update().catch(() => {});
+          registration.addEventListener("updatefound", () => {
+            const worker = registration.installing;
+            worker?.addEventListener("statechange", () => {
+              if (worker.state === "installed" && navigator.serviceWorker.controller) showToast("ACTUALIZACIÓN 404 PREPARADA · SE APLICARÁ AL REABRIR");
+            });
+          });
+        } catch (error) {
+          console.warn("No se pudo registrar el Service Worker de Nightmare 404.", error);
+        }
+      });
     }
   }
 
