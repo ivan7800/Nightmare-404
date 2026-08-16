@@ -1,0 +1,87 @@
+/* NIGHTMARE 404 v2.6 — Premium Production Pass */
+:root{--premium-gold:#d9b76d;--premium-violet:#927ac2;--premium-abyss:#05070b;--premium-line:rgba(217,183,109,.28)}
+
+/* Illustrated narrative events */
+.event-art{position:relative;margin:-.15rem 0 1rem;aspect-ratio:16/9;overflow:hidden;border:1px solid var(--premium-line);border-radius:14px;background:#040608;box-shadow:0 22px 55px rgba(0,0,0,.52)}
+.event-art img{display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.015);filter:saturate(.86) contrast(1.08) brightness(.88);animation:eventArtDrift 9s ease-in-out infinite alternate}
+.event-art::before{content:"";position:absolute;z-index:2;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(3,4,7,.72)),radial-gradient(circle at 50% 40%,transparent 0 42%,rgba(0,0,0,.36) 100%);pointer-events:none}
+.event-art::after{content:"ARCHIVO VISUAL · EVIDENCIA RECONSTRUIDA";position:absolute;z-index:3;left:.7rem;bottom:.55rem;color:rgba(226,223,209,.7);font:600 .55rem/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.13em}
+.event-art--anomaly img{animation:eventArtAnomaly 5.5s steps(2,end) infinite}
+
+/* Full boss artworks layered over the existing procedural entity system */
+.entity-visual--premium{width:min(520px,96%);aspect-ratio:5/3;isolation:isolate;animation:premiumBossFloat 4.8s ease-in-out infinite}
+.entity-visual--premium img{position:absolute;z-index:2;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 24px 42px rgba(0,0,0,.78)) saturate(.88) contrast(1.1);animation:premiumBossBreath 5.7s ease-in-out infinite}
+.entity-visual--premium .entity-aura{z-index:1;inset:-12%;border-radius:50%;background:radial-gradient(circle,rgba(217,183,109,.19),rgba(146,122,194,.08) 42%,transparent 70%);filter:blur(16px);animation:premiumAura 4.2s ease-in-out infinite}
+.entity-visual--premium .boss-layer--sigil{position:absolute;z-index:3;inset:8%;border:1px solid rgba(217,183,109,.18);border-radius:50%;animation:premiumSigil 18s linear infinite}
+.entity-visual--premium .boss-layer--sigil::before,.entity-visual--premium .boss-layer--sigil::after{content:"";position:absolute;inset:11%;border:1px dashed rgba(126,215,187,.15);border-radius:50%}
+.entity-visual--premium .boss-layer--sigil::after{inset:27%;border-color:rgba(146,122,194,.22);animation:premiumSigil 9s linear infinite reverse}
+.entity-visual--premium b{display:none}
+.enemy-stage .entity-visual--premium{width:min(580px,98%);max-height:340px}
+.boss-cinematic>.entity-visual--premium{width:min(500px,72vw);max-height:310px}
+.enemy-card--boss .enemy-stage{min-height:360px;background:radial-gradient(circle at 50% 44%,rgba(217,183,109,.07),rgba(4,7,10,.92) 58%)}
+.enemy-card--boss .enemy-hp{width:min(72%,440px);height:10px;bottom:1rem;box-shadow:0 0 22px rgba(185,79,91,.2)}
+
+/* Premium audio controls */
+.audio-mixer{margin:.75rem 0 0;padding:.85rem;border:1px solid rgba(141,214,215,.18);border-radius:12px;background:linear-gradient(145deg,rgba(12,18,23,.82),rgba(5,8,11,.78))}
+.audio-mixer__heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.55rem}
+.audio-mixer__heading b{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}.audio-mixer__heading small{color:#87949c;font-size:.65rem}
+.audio-channel{min-height:54px}.audio-channel span{display:grid}.audio-channel small{color:#849198;font-size:.64rem;margin-top:.12rem}
+
+/* More tactile game feedback */
+.action-bar button,.combat-actions button{overflow:hidden;position:relative}
+.action-bar button::after,.combat-actions button::after{content:"";position:absolute;inset:-70% auto -70% -24%;width:22%;transform:rotate(12deg);background:linear-gradient(90deg,transparent,rgba(217,183,109,.14),transparent);transition:transform .55s ease}
+.action-bar button:hover::after,.combat-actions button:hover::after{transform:translateX(620%) rotate(12deg)}
+.scene-panel::after{content:"";position:absolute;pointer-events:none;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(217,183,109,.035),inset 0 0 75px rgba(0,0,0,.14)}
+.scene-panel{position:relative}
+
+/* Archive gets illustrated boss records */
+.archive-boss-art{aspect-ratio:16/9;margin:-.2rem -.2rem .65rem;overflow:hidden;border-radius:9px;border:1px solid rgba(217,183,109,.15);background:#05070a}
+.archive-boss-art img{width:100%;height:100%;object-fit:cover;filter:saturate(.72) contrast(1.08) brightness(.75)}
+.info-card.unlocked:hover .archive-boss-art img{filter:saturate(.9) contrast(1.1) brightness(.88);transform:scale(1.02)}
+.archive-boss-art img{transition:filter .35s ease,transform .55s ease}
+
+@keyframes eventArtDrift{from{transform:scale(1.015) translate3d(-.4%,0,0)}to{transform:scale(1.045) translate3d(.5%,-.4%,0)}}
+@keyframes eventArtAnomaly{0%,86%,100%{transform:scale(1.02);filter:saturate(.82) contrast(1.08) brightness(.86)}88%{transform:scale(1.05) translateX(-4px);filter:hue-rotate(18deg) contrast(1.25)}90%{transform:scale(1.04) translateX(5px);filter:hue-rotate(-15deg) contrast(1.22)}}
+@keyframes premiumBossFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes premiumBossBreath{0%,100%{transform:scale(1);filter:drop-shadow(0 24px 42px rgba(0,0,0,.78)) saturate(.88) contrast(1.1)}50%{transform:scale(1.018);filter:drop-shadow(0 27px 48px rgba(0,0,0,.82)) saturate(.98) contrast(1.13)}}
+@keyframes premiumAura{0%,100%{opacity:.58;transform:scale(.96)}50%{opacity:.9;transform:scale(1.05)}}
+@keyframes premiumSigil{to{transform:rotate(360deg)}}
+
+body.reduce-motion .event-art img,body.reduce-motion .entity-visual--premium,body.reduce-motion .entity-visual--premium img,body.reduce-motion .boss-layer--sigil{animation:none!important}
+@media(prefers-reduced-motion:reduce){.event-art img,.entity-visual--premium,.entity-visual--premium img,.boss-layer--sigil{animation:none!important}}
+@media(max-width:700px){.event-art{border-radius:10px}.event-art::after{font-size:.49rem}.enemy-card--boss .enemy-stage{min-height:250px}.entity-visual--premium{width:100%}.audio-mixer{padding:.65rem}.audio-mixer__heading{align-items:flex-start;flex-direction:column;gap:.15rem}}
+
+
+/* PRODUCTION EDITION v3.0.0 */
+.brand-edition{display:block;margin-top:.22rem;font-size:.88rem;letter-spacing:.22em;color:var(--gold,#d6b36a);font-weight:700}
+.production-prologue p{max-width:68ch;margin-inline:auto}
+.prologue-art,.ending-art,.gallery-art,.archive-boss-art{margin:0 0 1rem}
+.prologue-art img,.ending-art img,.gallery-art img,.archive-boss-art img{display:block;width:100%;height:auto;border-radius:16px;border:1px solid rgba(214,179,106,.2);background:#070b0f;box-shadow:0 18px 46px rgba(0,0,0,.42)}
+.prologue-art img{aspect-ratio:16/9;object-fit:cover}
+.ending-art{max-width:520px;margin:1rem auto}
+.ending-art img{aspect-ratio:16/9;object-fit:cover}
+.gallery-card{overflow:hidden}
+.gallery-art img{aspect-ratio:16/9;object-fit:cover}
+.info-grid .gallery-card h3{margin-top:.2rem}
+.event-art img{box-shadow:0 16px 42px rgba(0,0,0,.38)}
+
+
+/* NOCTURNE EDITION v3.1.0 */
+.intro-screen{min-height:100svh;display:none;place-items:center;padding:0;background:#020305}
+.intro-screen.screen--active{display:grid}
+.intro-stage{position:relative;width:100%;min-height:100svh;overflow:hidden;background:#020305}
+.intro-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.82) contrast(1.08) brightness(.72);transform:scale(1.03);animation:introDrift 14s ease-in-out infinite alternate}
+.intro-stage::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,3,5,.96) 0%,rgba(2,3,5,.78) 42%,rgba(2,3,5,.28) 74%,rgba(2,3,5,.72) 100%),radial-gradient(circle at 70% 38%,rgba(214,179,106,.08),transparent 28%)}
+.intro-overlay{position:relative;z-index:2;display:flex;min-height:100svh;flex-direction:column;justify-content:center;align-items:flex-start;gap:1rem;width:min(720px,88vw);margin-left:clamp(1.2rem,7vw,8rem)}
+.intro-overlay h1{margin:0;font-size:clamp(3.8rem,12vw,9rem);line-height:.78;letter-spacing:-.06em}
+.intro-overlay h1 span,.intro-overlay h1 strong{display:block}.intro-overlay h1 strong{color:var(--red);text-shadow:0 0 42px rgba(217,111,122,.18)}
+.intro-copy{max-width:52ch;font-size:clamp(1rem,2vw,1.22rem);color:#c5ceca}
+.intro-enter{min-width:min(360px,86vw);padding:1rem 1.2rem;border:1px solid rgba(214,179,106,.35);background:linear-gradient(90deg,rgba(40,26,22,.86),rgba(12,16,20,.86));color:#fff;text-align:left;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.intro-enter span,.intro-enter small{display:block}.intro-enter span{font-weight:800;letter-spacing:.12em}.intro-enter small{margin-top:.25rem;color:var(--muted)}
+.case-cover{position:relative;z-index:1;margin:-.95rem -.95rem .9rem;overflow:hidden;border-radius:12px 12px 5px 5px;border-bottom:1px solid rgba(214,179,106,.16)}
+.case-cover img{display:block;width:100%;aspect-ratio:16/7;object-fit:cover;filter:saturate(.82) contrast(1.08) brightness(.78);transition:transform .55s ease,filter .55s ease}
+.case-card:hover .case-cover img,.case-card:focus-within .case-cover img{transform:scale(1.035);filter:saturate(.98) contrast(1.08) brightness(.9)}
+.case-card.active .case-cover img{filter:saturate(1.04) contrast(1.1) brightness(.92)}
+@keyframes introDrift{from{transform:scale(1.03) translate3d(0,0,0)}to{transform:scale(1.08) translate3d(-1.2%,.7%,0)}}
+@media (max-width:680px){.intro-overlay{margin-left:1.2rem;justify-content:flex-end;padding-bottom:12vh}.intro-overlay h1{font-size:clamp(4rem,22vw,6.8rem)}.case-cover{margin:-.75rem -.75rem .75rem}}
+@media (prefers-reduced-motion:reduce){.intro-art{animation:none}.case-cover img{transition:none}}

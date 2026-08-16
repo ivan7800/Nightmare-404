@@ -16,9 +16,16 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "index.html").read_text(encoding="utf-8")
 HTML = HTML.replace('<script src="js/data.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/premium-art.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/premium-audio.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/nocturne-ui.js" defer></script>', "")
 HTML = HTML.replace('<script src="js/app.js" defer></script>', "")
 HTML = HTML.replace('<link rel="stylesheet" href="css/styles.css">', "")
+HTML = HTML.replace('<link rel="stylesheet" href="css/premium.css">', "")
 DATA_JS = (ROOT / "js/data.js").read_text(encoding="utf-8")
+PREMIUM_ART_JS = (ROOT / "js/modules/premium-art.js").read_text(encoding="utf-8")
+PREMIUM_AUDIO_JS = (ROOT / "js/modules/premium-audio.js").read_text(encoding="utf-8")
+NOCTURNE_UI_JS = (ROOT / "js/modules/nocturne-ui.js").read_text(encoding="utf-8")
 APP_JS = (ROOT / "js/app.js").read_text(encoding="utf-8")
 GAME_DATA = json.loads(DATA_JS.strip()[len("window.N404_DATA = "):-1])
 DATA_VERSION = GAME_DATA["version"]
@@ -51,13 +58,26 @@ async def boot(browser, initial: dict[str, str] | None = None):
     await page.set_content(HTML, wait_until="domcontentloaded")
     await page.add_script_tag(content=storage_polyfill(initial))
     await page.add_script_tag(content=DATA_JS)
+    await page.add_script_tag(content=PREMIUM_ART_JS)
+    await page.add_script_tag(content=PREMIUM_AUDIO_JS)
+    await page.add_script_tag(content=NOCTURNE_UI_JS)
     await page.add_script_tag(content=APP_JS)
+    if await page.locator('#enter-signal').count() and await page.locator('#enter-signal').is_visible():
+        await page.locator('#enter-signal').click()
     return page, errors
 
 
+
+
+async def begin_new_game(page):
+    await page.locator('[data-action="new-game"]').click()
+    await page.locator('#prologue-next').click()
+    await page.locator('#prologue-next').click()
+    await page.locator('#prologue-next').click()
+
 async def create_save(browser) -> tuple[dict[str, str], dict]:
     page, errors = await boot(browser)
-    await page.locator('[data-action="new-game"]').click()
+    await begin_new_game(page)
     await page.locator('[data-character="lucia"]').click()
     assert await page.locator('[data-case]').count() == 5
     dump = await page.evaluate("window.__storageDump()")
@@ -73,12 +93,14 @@ async def run() -> None:
 
         page, errors = await boot(browser)
         assert await page.locator('#continue-btn').is_disabled()
-        await page.locator('[data-action="new-game"]').click()
+        await begin_new_game(page)
         assert await page.locator('[data-character]').count() == 3
+        await page.wait_for_function("document.activeElement && document.activeElement.id === 'character-title'", timeout=3000)
         assert await page.evaluate("document.activeElement.id") == "character-title"
         await page.locator('[data-character="lucia"]').click()
         assert await page.locator('[data-case]').count() == 5
         await page.locator('[data-case="block404"]').click()
+        await page.locator('#case-prelude-enter').click()
         await page.locator('#explore-btn').click()
         assert await page.locator('#game-dialog [data-event-choice]').count() >= 2
         pending_title = await page.locator('#dialog-title').inner_text()
@@ -206,6 +228,51 @@ async def run() -> None:
         assert not errors, errors
         await page.close()
 
+        # Copia descargable y carga desde archivo JSON.
+        dump, _ = await create_save(browser)
+        page, errors = await boot(browser, dump)
+        await page.locator('[data-action="settings"]').click()
+        await page.locator('#export-data').click()
+        exported_file_payload = await page.locator('#data-transfer').input_value()
+        async with page.expect_download() as download_info:
+            await page.locator('#download-backup').click()
+        download = await download_info.value
+        assert download.suggested_filename.endswith('.json')
+        await page.locator('#backup-file').set_input_files({
+            "name": "nightmare-backup.json",
+            "mimeType": "application/json",
+            "buffer": exported_file_payload.encode("utf-8")
+        })
+        await page.wait_for_function("document.getElementById('toast').textContent.includes('COPIA CARGADA')")
+        assert "COPIA CARGADA E IMPORTADA" in await page.locator('#toast').inner_text()
+        assert not errors, errors
+        await page.close()
+
+        # La opción de anomalías puede desactivarse sin activar reducción de movimiento.
+        page, errors = await boot(browser)
+        await page.locator('[data-action="settings"]').click()
+        await page.locator('input[name="anomalies"]').uncheck()
+        await page.locator('#settings-form button[type="submit"]').click()
+        saved_settings = json.loads((await page.evaluate("window.__storageDump()"))["nightmare404.settings.v1"])
+        assert saved_settings["anomalies"] is False
+        assert saved_settings["reducedMotion"] is False
+        assert not errors, errors
+        await page.close()
+
+        # El mezclador conserva canales independientes y se persiste.
+        page, errors = await boot(browser)
+        await page.locator('[data-action="settings"]').click()
+        await page.locator('input[name="audioMusic"]').uncheck()
+        await page.locator('input[name="audioFx"]').uncheck()
+        await page.locator('#settings-form button[type="submit"]').click()
+        saved_settings = json.loads((await page.evaluate("window.__storageDump()"))["nightmare404.settings.v1"])
+        assert saved_settings["audioMusic"] is False
+        assert saved_settings["audioFx"] is False
+        assert saved_settings["audioAmbient"] is True
+        assert saved_settings["audioUi"] is True
+        assert not errors, errors
+        await page.close()
+
         # Exportación e importación válida de una copia completa.
         dump, _ = await create_save(browser)
         page, errors = await boot(browser, dump)
@@ -235,6 +302,15 @@ async def run() -> None:
         assert await page.locator('#resume-game').is_visible()
         await page.keyboard.press("Escape")
         assert not await page.locator('#game-dialog').evaluate("element => element.open")
+        assert not errors, errors
+        await page.close()
+
+        # Sala de transmisiones: accesible desde menú y controles de preview reales.
+        page, errors = await boot(browser)
+        await page.locator('[data-action="transmissions"]').click()
+        assert await page.locator('#info-title').inner_text() == "Sala de transmisiones"
+        assert await page.locator('[data-transmission-scene]').count() == 5
+        assert await page.locator('#transmission-stop').is_visible()
         assert not errors, errors
         await page.close()
 

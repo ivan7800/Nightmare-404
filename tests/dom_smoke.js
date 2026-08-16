@@ -186,7 +186,7 @@ const legacySave = {
   ...seededSave,
   version: "1.0.1",
   characterId: "gabriel",
-  // escala antigua: Gabriel tenía 118 de vida y 94 de cordura, al 50 %
+  // escala antigua: Matías tenía 118 de vida y 94 de cordura, al 50 %
   health: 59, maxHealth: 118, sanity: 47, maxSanity: 94, power: 11,
   inventory: ["medkit", "fuse"]
 };

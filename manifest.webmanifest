@@ -1,14 +1,14 @@
 {
-  "name": "Nightmare 404 Remastered",
+  "name": "Nightmare 404 — Nocturne Edition",
   "short_name": "Nightmare 404",
-  "description": "Edición remasterizada del juego web de terror psicológico, investigación y supervivencia en Black Hollow.",
+  "description": "Horror cósmico local-first con prólogo cinematográfico, portadas por expediente, sala de transmisiones, jefes y finales ilustrados, audio local y PWA offline.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#050608",
-  "theme_color": "#08090c",
+  "background_color": "#040507",
+  "theme_color": "#070b0e",
   "lang": "es",
   "categories": [
     "games",
@@ -34,5 +34,6 @@
       "purpose": "maskable"
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "dir": "ltr"
 }
