@@ -15,10 +15,18 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "index.html").read_text(encoding="utf-8")
 CSS = (ROOT / "css/styles.css").read_text(encoding="utf-8")
+PREMIUM_CSS = (ROOT / "css/premium.css").read_text(encoding="utf-8")
 HTML = HTML.replace('<link rel="stylesheet" href="css/styles.css">', f"<style>{CSS}</style>")
+HTML = HTML.replace('<link rel="stylesheet" href="css/premium.css">', f"<style>{PREMIUM_CSS}</style>")
 HTML = HTML.replace('<script src="js/data.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/premium-art.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/premium-audio.js" defer></script>', "")
+HTML = HTML.replace('<script src="js/modules/nocturne-ui.js" defer></script>', "")
 HTML = HTML.replace('<script src="js/app.js" defer></script>', "")
 DATA_JS = (ROOT / "js/data.js").read_text(encoding="utf-8")
+PREMIUM_ART_JS = (ROOT / "js/modules/premium-art.js").read_text(encoding="utf-8")
+PREMIUM_AUDIO_JS = (ROOT / "js/modules/premium-audio.js").read_text(encoding="utf-8")
+NOCTURNE_UI_JS = (ROOT / "js/modules/nocturne-ui.js").read_text(encoding="utf-8")
 APP_JS = (ROOT / "js/app.js").read_text(encoding="utf-8")
 CHROMIUM = os.environ.get("CHROMIUM_PATH", "/usr/bin/chromium")
 WIDTHS = (320, 375, 680, 920, 1440)
@@ -35,6 +43,11 @@ STORAGE = """
     get length() { return store.size; }
   }});
   window.confirm = () => true;
+  window.Audio = class {
+    constructor() { this.volume = 1; this.loop = false; this.currentTime = 0; this.dataset = {}; }
+    play() { return Promise.resolve(); }
+    pause() {}
+  };
 })();
 """
 
@@ -101,36 +114,49 @@ async def check(page, label: str) -> None:
     assert result["visibleHiddenFocusables"] == 0, f"{label}: controles visibles dentro de aria-hidden"
 
 
+async def begin_new_game(page) -> None:
+    await page.locator('[data-action="new-game"]').click()
+    await page.locator('#prologue-next').click()
+    await page.locator('#prologue-next').click()
+    await page.locator('#prologue-next').click()
+
 async def run() -> None:
     checks = 0
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True, executable_path=CHROMIUM, args=["--no-sandbox"])
+        browser = await playwright.chromium.launch(headless=True, executable_path=CHROMIUM, args=["--no-sandbox", "--disable-gpu"])
         for width in WIDTHS:
-            page = await browser.new_page(viewport={"width": width, "height": 800}, bypass_csp=True)
+            page = await browser.new_page(viewport={"width": width, "height": 800}, bypass_csp=True, reduced_motion="reduce")
             errors: list[str] = []
             page.on("pageerror", lambda error: errors.append(str(error)))
             await page.set_content(HTML, wait_until="domcontentloaded")
             await page.add_script_tag(content=STORAGE)
             await page.add_script_tag(content=DATA_JS)
+            await page.add_script_tag(content=PREMIUM_ART_JS)
+            await page.add_script_tag(content=PREMIUM_AUDIO_JS)
+            await page.add_script_tag(content=NOCTURNE_UI_JS)
             await page.add_script_tag(content=APP_JS)
 
-            await check(page, f"{width}px menú")
+            await check(page, f"{width}px intro")
             checks += 1
             await page.keyboard.press("Tab")
             assert await page.locator(".skip-link").evaluate("node => node === document.activeElement"), f"{width}px: el enlace de salto no recibe el primer foco"
+            await page.locator('#enter-signal').click()
+            await check(page, f"{width}px menú")
+            checks += 1
             await page.locator('[data-action="settings"]').click()
-            await page.wait_for_timeout(350)
+            await page.wait_for_timeout(30)
             await check(page, f"{width}px opciones")
             checks += 1
             await page.locator('.screen--active [data-back="menu"]').click()
-            await page.wait_for_timeout(350)
-            await page.locator('[data-action="new-game"]').click()
+            await page.wait_for_timeout(30)
+            await begin_new_game(page)
             await check(page, f"{width}px personajes")
             checks += 1
             await page.locator('[data-character="lucia"]').click()
             await check(page, f"{width}px mapa")
             checks += 1
             await page.locator('[data-case="block404"]').click()
+            await page.locator('#case-prelude-enter').click()
             await check(page, f"{width}px juego")
             checks += 1
 

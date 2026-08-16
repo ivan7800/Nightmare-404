@@ -8,7 +8,7 @@
   const MAX_CONSUMABLES = 6;
   const KEY_KINDS = ["boss", "evidence", "passive"];
   const B = DATA.balance;
-  const SUPPORTED_SAVE_VERSIONS = new Set([DATA.version, "1.0.0", "1.0.1", "1.1.0", "1.1.1"]);
+  const SUPPORTED_SAVE_VERSIONS = new Set([DATA.version, "3.0.0", "2.6.0", "2.5.1", "2.5.0", "2.4.0", "2.3.0", "2.2.1", "2.2.0", "2.1.0", "2.0.0", "1.0.0", "1.0.1", "1.1.0", "1.1.1"]);
   const REBALANCED_SAVE_VERSIONS = new Set(["1.0.0", "1.0.1"]);
 
   const VALID_IDS = {
@@ -32,13 +32,276 @@
   let combatMeta = null;
   let audioContext = null;
   let toastTimer = 0;
+  let previousHud = { health: null, sanity: null, signal: null, clues: null };
+  let anomalyCooldown = 0;
+  let lastAmbientScene = null;
+  let ambientAudio = null;
+  let dialogReturnFocus = null;
+
+  function retriggerClass(element, className, duration = 520) {
+    if (!element || settings().reducedMotion) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+    window.setTimeout(() => element.classList.remove(className), duration);
+  }
+
+  function animateHudValue(id, previous, current, className = "hud-pop") {
+    const element = document.getElementById(id);
+    if (previous !== null && previous !== current) retriggerClass(element, className);
+  }
+
+  function pulseScene(kind = "action") {
+    const art = document.getElementById("scene-art");
+    if (!art) return;
+    retriggerClass(art, `scene-hit--${kind}`, kind === "clue" ? 900 : 620);
+  }
+
+  function premiumAudioEnabled(channel) {
+    const value = settings();
+    const key = { ambient: "audioAmbient", fx: "audioFx", ui: "audioUi", music: "audioMusic" }[channel];
+    return Boolean(value.sound && (!key || value[key]));
+  }
+
+  function premiumCue(name, channel = "fx", volume = .32) {
+    if (!premiumAudioEnabled(channel)) return;
+    window.N404_PREMIUM_AUDIO?.play(name, volume);
+  }
+
+  function updatePremiumAudio(scene = getCase()?.scene) {
+    const audio = window.N404_PREMIUM_AUDIO;
+    if (!audio) return;
+    const screen = document.body.dataset.screen;
+    if (screen === "menu") {
+      if (premiumAudioEnabled("ambient")) audio.startAmbient("menu", .11); else audio.stopAmbient();
+      audio.stopMusic();
+      return;
+    }
+    if (screen !== "game" || !state?.currentCaseId) {
+      audio.stopAmbient();
+      audio.stopMusic();
+      return;
+    }
+    if (premiumAudioEnabled("ambient")) audio.startAmbient(scene, .23); else audio.stopAmbient();
+    if (premiumAudioEnabled("music")) audio.startMusic(scene === "nexus" ? .18 : .09); else audio.stopMusic();
+  }
+
+  function playTone({ frequency = 90, duration = .12, type = "sine", volume = .022, slide = 0 } = {}) {
+    if (!premiumAudioEnabled("fx") || !("AudioContext" in window || "webkitAudioContext" in window)) return;
+    try {
+      const AudioClass = window.AudioContext || window.webkitAudioContext;
+      audioContext ||= new AudioClass();
+      if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      if (slide) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, frequency + slide), audioContext.currentTime + duration);
+      gain.gain.setValueAtTime(volume, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    } catch {}
+  }
+
+  function sceneStinger(kind = "enter") {
+    if (kind === "clue") { premiumCue("bell", "fx", .24); playTone({ frequency: 480, duration: .18, type: "sine", volume: .012, slide: 260 }); return; }
+    if (kind === "danger") { premiumCue("whisper", "fx", .24); playTone({ frequency: 72, duration: .38, type: "sawtooth", volume: .012, slide: -28 }); return; }
+    if (kind === "combat") { premiumCue("impact", "fx", .34); playTone({ frequency: 54, duration: .28, type: "square", volume: .014, slide: 36 }); return; }
+    premiumCue("door", "fx", .18);
+    playTone({ frequency: 84, duration: .24, type: "triangle", volume: .01, slide: -18 });
+  }
+
+  function stopAmbientSoundscape() {
+    if (!ambientAudio) return;
+    for (const node of ambientAudio.nodes || []) {
+      try { if (typeof node.stop === "function") node.stop(); } catch {}
+      try { if (typeof node.disconnect === "function") node.disconnect(); } catch {}
+    }
+    ambientAudio = null;
+    window.N404_PREMIUM_AUDIO?.stopAmbient();
+    window.N404_PREMIUM_AUDIO?.stopMusic();
+  }
+
+  function makeNoiseSource(context, seconds = 2) {
+    const length = Math.max(1, Math.floor(context.sampleRate * seconds));
+    const buffer = context.createBuffer(1, length, context.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * .65;
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    return source;
+  }
+
+  function startAmbientSoundscape(scene = getCase()?.scene) {
+    if (!scene || !settings().sound || document.body.dataset.screen !== "game") { stopAmbientSoundscape(); return; }
+    updatePremiumAudio(scene);
+    if (!settings().audioAmbient) return;
+    if (!("AudioContext" in window || "webkitAudioContext" in window)) return;
+    if (ambientAudio?.scene === scene) { updateAmbientMix(); return; }
+    stopAmbientSoundscape();
+    try {
+      const AudioClass = window.AudioContext || window.webkitAudioContext;
+      audioContext ||= new AudioClass();
+      if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+      const master = audioContext.createGain();
+      const noiseGain = audioContext.createGain();
+      const humGain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      const noise = makeNoiseSource(audioContext, 2.4);
+      const hum = audioContext.createOscillator();
+      const configs = {
+        block: { hum: 49, noise: .022, humVol: .011, filter: 460, type: "sawtooth" },
+        hospital: { hum: 92, noise: .014, humVol: .007, filter: 980, type: "triangle" },
+        forest: { hum: 38, noise: .03, humVol: .008, filter: 680, type: "sine" },
+        mansion: { hum: 61, noise: .018, humVol: .009, filter: 390, type: "triangle" },
+        nexus: { hum: 39, noise: .025, humVol: .014, filter: 860, type: "sine" }
+      };
+      const cfg = configs[scene] || configs.block;
+      filter.type = scene === "forest" ? "bandpass" : "lowpass";
+      filter.frequency.value = cfg.filter;
+      noiseGain.gain.value = cfg.noise;
+      humGain.gain.value = cfg.humVol;
+      master.gain.value = .28;
+      hum.type = cfg.type;
+      hum.frequency.value = cfg.hum;
+      noise.connect(filter).connect(noiseGain).connect(master);
+      hum.connect(humGain).connect(master);
+      const nodes = [noise, hum, filter, noiseGain, humGain, master];
+      const overtone = audioContext.createOscillator();
+      const overtoneGain = audioContext.createGain();
+      overtone.type = scene === "mansion" ? "triangle" : "sine";
+      overtone.frequency.value = scene === "forest" ? 74 : scene === "hospital" ? 128 : scene === "nexus" ? 83 : 67;
+      overtoneGain.gain.value = scene === "nexus" ? .006 : .003;
+      overtone.connect(overtoneGain).connect(master);
+      overtone.start();
+      nodes.push(overtone, overtoneGain);
+      if (scene === "nexus" || scene === "block") {
+        const pulse = audioContext.createOscillator();
+        const pulseGain = audioContext.createGain();
+        pulse.type = "square";
+        pulse.frequency.value = scene === "nexus" ? 19 : 13;
+        pulseGain.gain.value = .0018;
+        pulse.connect(pulseGain).connect(master);
+        pulse.start();
+        nodes.push(pulse, pulseGain);
+      }
+      master.connect(audioContext.destination);
+      noise.start();
+      hum.start();
+      ambientAudio = { scene, nodes, master, noiseGain, humGain };
+      updateAmbientMix();
+    } catch { stopAmbientSoundscape(); }
+  }
+
+  function updateAmbientMix() {
+    if (!ambientAudio || !state || !audioContext) return;
+    try {
+      const signal = clamp(state.signal / 100, 0, 1);
+      const sanity = clamp(state.sanity / state.maxSanity, 0, 1);
+      const target = .54 + signal * .24 + (1 - sanity) * .16;
+      ambientAudio.master.gain.setTargetAtTime(target, audioContext.currentTime, .35);
+      ambientAudio.noiseGain.gain.setTargetAtTime(.012 + signal * .015 + (1 - sanity) * .008, audioContext.currentTime, .5);
+    } catch {}
+  }
+
+  function entityVisualMarkup(enemy, isBoss = false) {
+    const id = escapeHTML(enemy.id);
+    const icon = escapeHTML(enemy.icon || "404");
+    const bossArt = isBoss ? window.N404_PREMIUM_ART?.boss?.[enemy.id] : null;
+    if (bossArt) {
+      return `<div class="entity-visual entity-visual--boss entity-visual--premium" data-entity="${id}" aria-hidden="true"><span class="entity-aura"></span><img src="${escapeHTML(bossArt)}" alt="" loading="eager" decoding="async"><span class="boss-layer--sigil"></span><b>${icon}</b></div>`;
+    }
+    return `<div class="entity-visual ${isBoss ? "entity-visual--boss" : ""}" data-entity="${id}" aria-hidden="true">
+      <span class="entity-aura"></span><span class="entity-body"></span><span class="entity-face"></span><span class="entity-limbs"></span><b>${icon}</b>
+    </div>`;
+  }
+
+  function showLocationSplash(caseData = getCase()) {
+    if (!caseData || settings().reducedMotion) return;
+    const splash = document.getElementById("location-splash");
+    if (!splash) return;
+    document.getElementById("location-splash-code").textContent = `${SCENE_LABELS[caseData.scene] || "BLACK HOLLOW"} · EXP ${String(caseData.order).padStart(2, "0")}`;
+    document.getElementById("location-splash-title").textContent = caseData.location.toUpperCase();
+    document.getElementById("location-splash-time").textContent = `DÍA ${state.day} · ${formatTime()}`;
+    retriggerClass(splash, "location-splash--show", 1750);
+    sceneStinger("enter");
+  }
+
+  function sanityBand() {
+    if (!state) return "stable";
+    const ratio = state.sanity / state.maxSanity;
+    if (ratio <= .2) return "fractured";
+    if (ratio <= .4) return "critical";
+    if (ratio <= .7) return "frayed";
+    return "stable";
+  }
+
+  function maybeAnomaly(force = false) {
+    if (!state || settings().reducedMotion || !settings().anomalies || document.body.dataset.screen !== "game" || dialog.open) return;
+    const now = Date.now();
+    if (!force && now < anomalyCooldown) return;
+    const band = sanityBand();
+    const chance = band === "fractured" ? .32 : band === "critical" ? .18 : band === "frayed" ? .06 : .018;
+    if (!force && Math.random() > chance) return;
+    anomalyCooldown = now + 9000;
+    const art = document.getElementById("scene-art");
+    const flash = document.getElementById("anomaly-flash");
+    if (art) retriggerClass(art, "scene-anomaly-active", 980);
+    if (flash && (band === "fractured" || force)) retriggerClass(flash, "anomaly-flash--show", 520);
+    sceneStinger("danger");
+  }
+
+  function updateAliveScene() {
+    if (!state?.currentCaseId) return;
+    const art = document.getElementById("scene-art");
+    if (!art) return;
+    const band = sanityBand();
+    art.dataset.sanity = band;
+    document.body.dataset.sanity = band;
+    art.dataset.scene = getCase().scene;
+    if (lastAmbientScene !== getCase().scene) {
+      lastAmbientScene = getCase().scene;
+      window.setTimeout(() => maybeAnomaly(false), 2200);
+    }
+    startAmbientSoundscape(getCase().scene);
+    updateAmbientMix();
+  }
+
+  function combatPulse(kind = "hit") {
+    if (settings().reducedMotion) return;
+    retriggerClass(dialog, `combat-${kind}`, kind === "enemy" ? 480 : 360);
+  }
 
   const DEFAULT_SETTINGS = {
     sound: true,
     crt: true,
     reducedMotion: false,
     largeText: false,
-    highContrast: false
+    highContrast: false,
+    anomalies: true,
+    audioAmbient: true,
+    audioFx: true,
+    audioUi: true,
+    audioMusic: true
+  };
+
+  const SCENE_LABELS = {
+    block: "UMBRAL HABITADO",
+    hospital: "PABELLÓN PROFANO",
+    forest: "BOSQUE DE LOS NOMBRES",
+    mansion: "CASA HEREDADA",
+    nexus: "ABISMO PRIMORDIAL"
+  };
+
+  const SCENE_ACCENTS = {
+    block: "#b94f5b",
+    hospital: "#7ed7bb",
+    forest: "#97b96b",
+    mansion: "#8a72b8",
+    nexus: "#d6b36a"
   };
 
   function storageGet(key) {
@@ -130,7 +393,11 @@
     document.body.classList.toggle("no-crt", !value.crt);
     document.body.classList.toggle("reduce-motion", value.reducedMotion);
     document.body.classList.toggle("high-contrast", value.highContrast);
+    document.body.classList.toggle("no-anomalies", !value.anomalies);
     document.documentElement.style.setProperty("--font-scale", value.largeText ? "1.12" : "1");
+    if (!value.sound) stopAmbientSoundscape();
+    else if (document.body.dataset.screen === "game" && state?.currentCaseId) startAmbientSoundscape(getCase()?.scene);
+    updatePremiumAudio(getCase()?.scene);
   }
 
   function showScreen(id) {
@@ -143,6 +410,10 @@
       if (active) activeScreen = screen;
     });
     window.scrollTo({ top: 0, behavior: settings().reducedMotion ? "auto" : "smooth" });
+    if (id !== "game") stopAmbientSoundscape();
+    else if (state?.currentCaseId) window.setTimeout(() => startAmbientSoundscape(getCase()?.scene), 80);
+    window.setTimeout(() => updatePremiumAudio(getCase()?.scene), 100);
+    if (activeScreen) retriggerClass(activeScreen, "screen--enter", 700);
     window.requestAnimationFrame(() => {
       const heading = activeScreen?.querySelector("h1, h2");
       if (heading) {
@@ -570,13 +841,22 @@
             : "SIN INVESTIGAR";
       const button = complete ? "Revisar expediente" : progress ? "Continuar investigación" : "Entrar en la anomalía";
       const glow = caseData.scene === "hospital" ? "rgba(66,155,132,.20)" : caseData.scene === "forest" ? "rgba(116,139,64,.20)" : caseData.scene === "mansion" ? "rgba(143,83,130,.20)" : caseData.scene === "nexus" ? "rgba(218,132,38,.25)" : "rgba(200,39,61,.18)";
+      const clueRatio = progress ? Math.min(progress.clues, caseData.clueTarget) / caseData.clueTarget : 0;
+      const exploreRatio = progress ? Math.min(progress.explored, caseData.minExplores) / caseData.minExplores : 0;
+      const progressRatio = complete ? 100 : Math.round(((clueRatio + exploreRatio) / 2) * 100);
+      const tier = caseData.final ? "RIESGO Ω" : `RIESGO 0${caseData.order}`;
+      const sector = SCENE_LABELS[caseData.scene] || "SECTOR DESCONOCIDO";
+      const caseArt = window.N404_PREMIUM_ART?.cases?.[caseData.scene];
       return `
-        <article class="case-card ${complete ? "completed" : ""} ${active ? "active" : ""} ${locked ? "locked" : ""}" data-icon="${escapeHTML(caseData.icon)}" data-scene="${escapeHTML(caseData.scene)}" style="--case-glow:${glow}">
+        <article class="case-card ${complete ? "completed" : ""} ${active ? "active" : ""} ${locked ? "locked" : ""}" data-icon="${escapeHTML(caseData.icon)}" data-scene="${escapeHTML(caseData.scene)}" style="--case-glow:${glow};--case-progress:${progressRatio}%">
+          ${caseArt ? `<figure class="case-cover" aria-hidden="true"><img src="${escapeHTML(caseArt)}" alt="" loading="lazy" decoding="async"></figure>` : ""}
           <span class="case-card__version">EXPEDIENTE ${String(caseData.order).padStart(2, "0")} · ${escapeHTML(caseData.version)}</span>
+          <div class="case-meta-strip" aria-hidden="true"><span class="case-badge">${tier}</span><span class="case-badge case-badge--scene">${escapeHTML(sector)}</span></div>
           <h3>${escapeHTML(caseData.title)}</h3>
           <span class="case-location">${escapeHTML(caseData.location)}</span>
           <p><b>${escapeHTML(caseData.tagline)}</b></p>
           <p>${escapeHTML(caseData.description)}</p>
+          <div class="case-progress" aria-hidden="true"><span style="width:${progressRatio}%"></span></div>
           <div class="case-status">
             <span>${status}</span>
             <button class="case-card__action" data-case="${caseData.id}" ${locked ? "disabled" : ""}>${button}</button>
@@ -599,13 +879,38 @@
     saveGame();
   }
 
-  function enterCase(caseId) {
+  function showCasePrelude(caseData) {
+    const nocturne = window.N404_NOCTURNE?.cases?.[caseData.id];
+    const sceneImage = `assets/images/scenes/${caseData.scene}.webp`;
+    const sigil = nocturne?.art;
+    const caseCue = { block: "caseBlock", hospital: "caseHospital", forest: "caseForest", mansion: "caseMansion", nexus: "caseNexus" }[caseData.scene];
+    if (caseCue) premiumCue(caseCue, "fx", caseData.scene === "nexus" ? .34 : .24);
+    openDialog(`
+      <div class="dialog-body case-prelude">
+        <p class="event-kicker">${escapeHTML(nocturne?.label || "EXPEDIENTE 404")} · ${escapeHTML(caseData.location)}</p>
+        <div class="case-prelude__visual">
+          <img class="case-prelude__scene" src="${escapeHTML(sceneImage)}" alt="${escapeHTML(caseData.location)}" loading="eager" decoding="async">
+          ${sigil ? `<img class="case-prelude__sigil" src="${escapeHTML(sigil)}" alt="" aria-hidden="true" loading="eager" decoding="async">` : ""}
+        </div>
+        <h2 id="dialog-title">${escapeHTML(caseData.title)}</h2>
+        <p class="case-prelude__quote">${escapeHTML(nocturne?.transmission || caseData.tagline)}</p>
+        <p>${escapeHTML(caseData.intro)}</p>
+        <div class="dialog-actions">
+          <button id="case-prelude-back">Volver al mapa</button>
+          <button id="case-prelude-enter">Descender al expediente</button>
+        </div>
+      </div>
+    `);
+    document.getElementById("case-prelude-back").addEventListener("click", closeDialog);
+    document.getElementById("case-prelude-enter").addEventListener("click", () => {
+      closeDialog();
+      enterCaseNow(caseData.id);
+    });
+  }
+
+  function enterCaseNow(caseId) {
     const caseData = getCase(caseId);
-    if (!caseData || (caseData.final && state.completedCases.filter(id => id !== "nexus").length < 4)) return;
-    if (state.completedCases.includes(caseId)) {
-      showCaseReview(caseData);
-      return;
-    }
+    if (!caseData) return;
     if (!state.caseProgress[caseId]) {
       state.caseProgress[caseId] = {
         clues: 0,
@@ -626,6 +931,21 @@
     saveGame();
     renderGame();
     showScreen("game");
+    window.setTimeout(() => showLocationSplash(caseData), 120);
+  }
+
+  function enterCase(caseId) {
+    const caseData = getCase(caseId);
+    if (!caseData || (caseData.final && state.completedCases.filter(id => id !== "nexus").length < 4)) return;
+    if (state.completedCases.includes(caseId)) {
+      showCaseReview(caseData);
+      return;
+    }
+    if (!state.caseProgress[caseId]) {
+      showCasePrelude(caseData);
+      return;
+    }
+    enterCaseNow(caseId);
   }
 
   function showCaseReview(caseData) {
@@ -648,6 +968,22 @@
     const progress = getProgress();
     const weather = getWeather();
     const ready = progress.clues >= caseData.clueTarget && progress.explored >= caseData.minExplores;
+    const healthRatio = state.health / state.maxHealth;
+    const sanityRatio = state.sanity / state.maxSanity;
+    const daypart = currentDaypart().toLowerCase();
+    const signalLevel = Math.round(state.signal);
+    const alertState = state.signal >= 80 || healthRatio <= 0.3 || sanityRatio <= 0.3
+      ? "critical"
+      : state.signal >= B.highSignalThreshold || healthRatio <= 0.55 || sanityRatio <= 0.55
+        ? "warning"
+        : "stable";
+
+    document.body.classList.toggle("health-warning", healthRatio <= 0.55);
+    document.body.classList.toggle("health-critical", healthRatio <= 0.3);
+    document.body.classList.toggle("sanity-warning", sanityRatio <= 0.55);
+    document.body.classList.toggle("sanity-critical", sanityRatio <= 0.3);
+    document.body.dataset.weather = state.weather;
+    document.body.dataset.daypart = daypart;
 
     document.getElementById("hud-portrait").src = character.image;
     document.getElementById("hud-portrait").alt = `Retrato de ${character.name}`;
@@ -666,6 +1002,14 @@
     document.getElementById("signal-value").textContent = `${state.signal}%`;
     document.body.classList.toggle("signal-danger", state.signal >= B.highSignalThreshold);
     document.getElementById("clue-value").textContent = `${Math.min(progress.clues, caseData.clueTarget)}/${caseData.clueTarget}`;
+    animateHudValue("health-value", previousHud.health, state.health, "hud-pop--health");
+    animateHudValue("sanity-value", previousHud.sanity, state.sanity, "hud-pop--sanity");
+    animateHudValue("signal-value", previousHud.signal, state.signal, "hud-pop--signal");
+    animateHudValue("clue-value", previousHud.clues, progress.clues, "hud-pop--clue");
+    previousHud = { health: state.health, sanity: state.sanity, signal: state.signal, clues: progress.clues };
+    document.documentElement.style.setProperty("--sanity-ratio", String(sanityRatio));
+    document.documentElement.style.setProperty("--health-ratio", String(healthRatio));
+    document.documentElement.style.setProperty("--signal-ratio", String(signalLevel / 100));
     document.getElementById("time-label").textContent = `DÍA ${state.day} · ${currentDaypart()} · ${formatTime()}`;
     document.getElementById("weather-label").textContent = `${weather.icon} ${weather.name.toUpperCase()}`;
     document.getElementById("location-title").textContent = ready ? `${caseData.location}: el foco responde` : caseData.location;
@@ -676,7 +1020,13 @@
     const art = document.getElementById("scene-art");
     art.className = `scene-art scene--${caseData.scene}`;
     art.dataset.weather = state.weather;
+    art.dataset.daypart = daypart;
+    art.dataset.alert = alertState;
+    art.style.setProperty("--scene-accent", SCENE_ACCENTS[caseData.scene] || "#ff5266");
+    art.style.setProperty("--signal-intensity", String(signalLevel / 100));
     document.getElementById("scene-code").textContent = caseData.final ? "404" : String(caseData.order).padStart(2, "0");
+    document.getElementById("scene-sector").textContent = SCENE_LABELS[caseData.scene] || "SECTOR DESCONOCIDO";
+    document.getElementById("scene-frequency").textContent = `FREQ. 0404.${String(signalLevel).padStart(2, "0")}`;
 
     document.getElementById("inventory-count").textContent = `${consumableCount()}/${MAX_CONSUMABLES}`;
     document.getElementById("inventory-list").innerHTML = state.inventory.length
@@ -696,6 +1046,7 @@
         : `${caseData.objective} Faltan ${Math.max(0, caseData.clueTarget - progress.clues)} pista(s).`;
     document.getElementById("confront-btn").disabled = !ready || progress.bossDefeated;
     document.getElementById("rest-btn").disabled = progress.rests >= B.restCap;
+    updateAliveScene();
     saveGame();
   }
 
@@ -707,6 +1058,8 @@
 
   function explore() {
     if (!canAct()) return;
+    pulseScene("action");
+    sceneStinger("enter");
     const caseData = getCase();
     const progress = getProgress();
     progress.explored += 1;
@@ -723,6 +1076,7 @@
 
   function investigate() {
     if (!canAct()) return;
+    pulseScene("scan");
     const caseData = getCase();
     const progress = getProgress();
     advanceTime(randomInt(16, 28));
@@ -735,6 +1089,8 @@
     if (Math.random() < chance) {
       progress.clues += 1;
       pushLog("Una marca repetida conecta las evidencias del caso.");
+      pulseScene("clue");
+      sceneStinger("clue");
       showToast("PISTA ENCONTRADA");
     } else if (Math.random() < B.investigateAmbushChance) {
       const enemyId = caseData.enemies[randomInt(0, caseData.enemies.length - 1)];
@@ -747,11 +1103,13 @@
       pushLog("Solo encuentras una versión de la escena que no coincide con tus recuerdos.");
     }
     renderGame();
+    maybeAnomaly(false);
     checkFailure();
   }
 
   function rest() {
     if (!canAct()) return;
+    pulseScene("recover");
     const progress = getProgress();
     if (progress.rests >= B.restCap) {
       showToast("No puedes volver a descansar en este misterio.");
@@ -766,6 +1124,7 @@
     state.health = clamp(state.health + B.restHealth, 0, state.maxHealth);
     state.sanity = clamp(state.sanity + B.restSanity, 0, state.maxSanity);
     pushLog("Cierras los ojos unos minutos. Algo permanece despierto por ti.");
+    premiumCue("water", "fx", .11);
     renderGame();
     checkFailure();
   }
@@ -781,11 +1140,15 @@
 
   function showEvent(event) {
     const character = getCharacter();
+    const eventArt = window.N404_PREMIUM_ART?.events?.[event.id];
     state.pendingEventId = event.id;
     saveGame();
+    premiumCue("step", "fx", .16);
+    if (eventArt) premiumCue(event.id.includes("morgue") || event.id.includes("well") ? "water" : "whisper", "fx", .13);
     openDialog(`
       <div class="dialog-body">
         <p class="event-kicker">EVENTO · ${escapeHTML(getCase().location)}</p>
+        ${eventArt ? `<figure class="event-art ${event.id.startsWith("n-") ? "event-art--anomaly" : ""}"><img src="${escapeHTML(eventArt)}" alt="Ilustración de ${escapeHTML(event.title)}" loading="eager" decoding="async"></figure>` : ""}
         <h2 id="dialog-title">${escapeHTML(event.title)}</h2>
         <p>${escapeHTML(event.text)}</p>
         <div class="dialog-actions">
@@ -811,6 +1174,7 @@
     const outcome = choice.outcome || {};
     state.pendingEventId = null;
     applyOutcome(outcome);
+    premiumCue("uiConfirm", "ui", .18);
     closeDialog();
     renderGame();
     if (outcome.enemy) {
@@ -825,6 +1189,7 @@
     if (outcome.sanity) state.sanity = clamp(state.sanity + outcome.sanity, 0, state.maxSanity);
     if (outcome.signal || outcome.doom) applySignal(Number(outcome.signal || outcome.doom));
     if (outcome.clue) {
+      pulseScene("clue");
       let found = Number(outcome.clue);
       if (getCharacter().passiveKey === "extraClue" && Math.random() < 0.18) {
         found += 1;
@@ -940,6 +1305,7 @@
     };
     combatMeta = {
       boss: Boolean(options.boss || DATA.bosses.some(boss => boss.id === enemyId)),
+      introPlayed: false,
       specialUsed: false,
       guard: 0,
       boost: -(state.nextAttackPenalty || 0)
@@ -956,6 +1322,8 @@
       showToast(`DEBILIDAD EXPLOTADA: -${weakItem.value} PV`);
     }
     updateProfile("enemies", template.id);
+    sceneStinger("combat");
+    combatPulse(combatMeta.boss ? "boss" : "enter");
     syncCombatState();
     saveGame();
     renderCombat();
@@ -963,14 +1331,17 @@
 
   function renderCombat(message = "") {
     if (!currentEnemy) return;
+    const showBossIntro = Boolean(combatMeta.boss && !combatMeta.introPlayed);
+    if (showBossIntro) combatMeta.introPlayed = true;
     syncCombatState();
     saveGame();
     const character = getCharacter();
     openDialog(`
-      <div class="dialog-body">
+      <div class="dialog-body combat-dialog-body ${combatMeta.boss ? "combat-dialog-body--boss" : ""}">
+        ${showBossIntro ? `<div class="boss-cinematic" aria-hidden="true"><span>ANOMALÍA MAYOR DETECTADA</span>${entityVisualMarkup(currentEnemy, true)}<strong>${escapeHTML(currentEnemy.name)}</strong><i>FRECUENCIA ${String(state.signal).padStart(2, "0")} / 404</i></div>` : ""}
         <p class="event-kicker">${combatMeta.boss ? "JEFE DE ANOMALÍA" : "ENCUENTRO"} · ${escapeHTML(getWeather().name)}</p>
-        <div class="enemy-card">
-          <div class="enemy-icon" aria-hidden="true">${escapeHTML(currentEnemy.icon)}</div>
+        <div class="enemy-card ${combatMeta.boss ? "enemy-card--boss" : ""}">
+          <div class="enemy-stage">${entityVisualMarkup(currentEnemy, combatMeta.boss)}<div class="enemy-hp"><span style="width:${Math.max(0, currentEnemy.hp) / currentEnemy.maxHp * 100}%"></span></div></div>
           <div>
             <h2 id="dialog-title">${escapeHTML(currentEnemy.name)}</h2>
             <p>${escapeHTML(currentEnemy.text)}</p>
@@ -983,12 +1354,12 @@
             ${message ? `<p class="outcome">${escapeHTML(message)}</p>` : ""}
           </div>
         </div>
-        <div class="dialog-actions">
-          <button data-combat="attack">Atacar</button>
-          <button data-combat="special" ${combatMeta.specialUsed ? "disabled" : ""}>${escapeHTML(character.special)}${combatMeta.specialUsed ? " · USADO" : ""}</button>
-          <button data-combat="focus">Concentrarse</button>
-          <button data-combat="item">Usar objeto</button>
-          <button data-combat="flee" ${combatMeta.boss ? "disabled" : ""}>Huir</button>
+        <div class="dialog-actions combat-actions">
+          <button data-combat="attack"><b>ATAQUE</b><small>Golpe directo</small></button>
+          <button data-combat="special" ${combatMeta.specialUsed ? "disabled" : ""}><b>${escapeHTML(character.special)}${combatMeta.specialUsed ? " · USADO" : ""}</b><small>Habilidad de investigador</small></button>
+          <button data-combat="focus"><b>CONCENTRARSE</b><small>Recupera cordura y guardia</small></button>
+          <button data-combat="item"><b>OBJETO</b><small>Usa recursos de equipo</small></button>
+          <button data-combat="flee" ${combatMeta.boss ? "disabled" : ""}><b>HUIR</b><small>${combatMeta.boss ? "No hay salida" : "Rompe contacto"}</small></button>
         </div>
       </div>
     `);
@@ -1003,7 +1374,9 @@
       combatMeta.boost = 0;
       if (character.passiveKey === "spiritDamage" && currentEnemy.type === "spirit") damage += 3;
       currentEnemy.hp -= damage;
-      beep(78, 0.08);
+      combatPulse("hit");
+      premiumCue("impact", "fx", .28);
+      beep(78, 0.08, "fx");
       if (currentEnemy.hp <= 0) return winCombat(`Infliges ${damage} de daño.`);
       enemyTurn(`Infliges ${damage} de daño.`);
       return;
@@ -1121,6 +1494,7 @@
   }
 
   function enemyTurn(prefix) {
+    combatPulse("enemy");
     const weather = getWeather();
     let damage = currentEnemy.attack + weather.enemy + randomInt(-2, 2) - combatMeta.guard - currentEnemy.attackDebuff;
     damage = Math.max(1, damage);
@@ -1230,9 +1604,12 @@
     state.currentCaseId = null;
     saveGame();
 
+    const closureArt = window.N404_PREMIUM_ART?.boss?.[caseData.boss];
+    premiumCue("clearStinger", "fx", .24);
     openDialog(`
       <div class="dialog-body ending good">
         <div class="ending-icon" aria-hidden="true">${escapeHTML(caseData.icon)}</div>
+        ${closureArt ? `<figure class="ending-art"><img src="${escapeHTML(closureArt)}" alt="Ilustración de ${escapeHTML(finishedTitle)}" loading="eager" decoding="async"></figure>` : ""}
         <p class="event-kicker">EXPEDIENTE CERRADO</p>
         <h2 id="dialog-title">${escapeHTML(finishedTitle)}</h2>
         <p>${escapeHTML(choice.result)}</p>
@@ -1326,12 +1703,14 @@
     const epilogue = character.id === "lucia"
       ? "Lucía publica el reportaje bajo un titular imposible. Algunas copias solo muestran una página en blanco."
       : character.id === "gabriel"
-        ? "Gabriel conserva el rosario. Por primera vez, ninguna cuenta está caliente."
+        ? "Matías conserva el rosario. Por primera vez, ninguna cuenta está caliente."
         : "Noa comprueba la red. PISO_404 ha desaparecido, aunque su dispositivo aún recibe un único paquete cada madrugada.";
 
+    const endingArt = window.N404_PREMIUM_ART?.endings?.[endingId];
     openDialog(`
       <div class="dialog-body ending ${ending.className}">
         <div class="ending-icon" aria-hidden="true">${escapeHTML(ending.icon)}</div>
+        ${endingArt ? `<figure class="ending-art"><img src="${escapeHTML(endingArt)}" alt="${escapeHTML(ending.title)}" loading="eager" decoding="async"></figure>` : ""}
         <p class="event-kicker">FINAL · ${escapeHTML(character.name)}</p>
         <h2 id="dialog-title">${escapeHTML(ending.title)}</h2>
         <p>${escapeHTML(ending.text)}</p>
@@ -1433,12 +1812,49 @@
   }
 
   function openDialog(html) {
+    dialogReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     dialogContent.innerHTML = html;
     if (!dialog.open) dialog.showModal();
+    window.requestAnimationFrame(() => {
+      const heading = dialogContent.querySelector("h1, h2, h3");
+      const firstControl = dialogContent.querySelector("button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]");
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      } else if (firstControl) firstControl.focus({ preventScroll: true });
+    });
   }
 
   function closeDialog() {
-    if (dialog.open) dialog.close();
+    if (!dialog.open) return;
+    dialog.close();
+    if (dialogReturnFocus?.isConnected && !dialogReturnFocus.closest('[aria-hidden="true"]')) dialogReturnFocus.focus({ preventScroll: true });
+    dialogReturnFocus = null;
+  }
+
+  function initCinematicInteractions() {
+    const art = document.getElementById("scene-art");
+    if (art) {
+      art.addEventListener("pointermove", event => {
+        if (settings().reducedMotion || matchMedia("(pointer: coarse)").matches) return;
+        const rect = art.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+        const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+        art.style.setProperty("--parallax-x", `${x * 10}px`);
+        art.style.setProperty("--parallax-y", `${y * 7}px`);
+      });
+      art.addEventListener("pointerleave", () => {
+        art.style.setProperty("--parallax-x", "0px");
+        art.style.setProperty("--parallax-y", "0px");
+      });
+    }
+
+    document.addEventListener("pointerdown", event => {
+      const button = event.target.closest("button:not(:disabled)");
+      if (!button || settings().reducedMotion) return;
+      retriggerClass(button, "button-press", 280);
+      premiumCue("uiClick", "ui", .08);
+    });
   }
 
   function showToast(message) {
@@ -1449,8 +1865,8 @@
     toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2600);
   }
 
-  function beep(frequency = 140, duration = 0.05) {
-    if (!settings().sound || !("AudioContext" in window || "webkitAudioContext" in window)) return;
+  function beep(frequency = 140, duration = 0.05, channel = "ui") {
+    if (!premiumAudioEnabled(channel) || !("AudioContext" in window || "webkitAudioContext" in window)) return;
     try {
       const AudioClass = window.AudioContext || window.webkitAudioContext;
       audioContext ||= new AudioClass();
@@ -1489,12 +1905,16 @@
           <p>${storedProfile.events.includes(event.id) ? escapeHTML(event.text) : "Datos insuficientes."}</p>
         </article>
       `).join("");
-      const enemyCards = [...DATA.enemies, ...DATA.bosses].map(enemy => `
-        <article class="info-card ${storedProfile.enemies.includes(enemy.id) ? "" : "locked"}">
-          <h3>${storedProfile.enemies.includes(enemy.id) ? escapeHTML(enemy.name) : "Entidad desconocida"}</h3>
-          <p>${storedProfile.enemies.includes(enemy.id) ? escapeHTML(enemy.text) : "Sin imagen ni clasificación."}</p>
-        </article>
-      `).join("");
+      const enemyCards = [...DATA.enemies, ...DATA.bosses].map(enemy => {
+        const unlocked = storedProfile.enemies.includes(enemy.id);
+        const art = unlocked ? window.N404_PREMIUM_ART?.boss?.[enemy.id] : null;
+        return `
+        <article class="info-card ${unlocked ? "" : "locked"}">
+          ${art ? `<div class="archive-boss-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(enemy.name)}" loading="lazy" decoding="async"></div>` : ""}
+          <h3>${unlocked ? escapeHTML(enemy.name) : "Entidad desconocida"}</h3>
+          <p>${unlocked ? escapeHTML(enemy.text) : "Sin imagen ni clasificación."}</p>
+        </article>`;
+      }).join("");
       const itemCards = Object.values(DATA.items).map(item => `
         <article class="info-card ${storedProfile.items.includes(item.id) ? "" : "locked"}">
           <h3>${storedProfile.items.includes(item.id) ? escapeHTML(item.name) : "Objeto sin catalogar"}</h3>
@@ -1534,15 +1954,101 @@
           </article>
         `).join("")}</div>
       `;
+
+} else if (kind === "gallery") {
+  eyebrow.textContent = "PRODUCTION EDITION";
+  title.textContent = "Galería de producción";
+  const bossCards = Object.entries(window.N404_PREMIUM_ART?.boss || {}).map(([id, art]) => {
+    const enemy = DATA.bosses.find(entry => entry.id === id);
+    return `
+      <article class="info-card unlocked gallery-card">
+        <figure class="gallery-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(enemy?.name || id)}" loading="lazy" decoding="async"></figure>
+        <h3>${escapeHTML(enemy?.name || id)}</h3>
+        <p>${escapeHTML(enemy?.description || enemy?.text || "Entidad sin catalogar.")}</p>
+      </article>`;
+  }).join("");
+  const endingNames = { dawn: "Amanecer 404", archive: "El Archivista", offline: "Universo desconectado", vessel: "El Recipiente" };
+  const endingCards = Object.entries(window.N404_PREMIUM_ART?.endings || {}).map(([id, art]) => `
+    <article class="info-card unlocked gallery-card">
+      <figure class="gallery-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(endingNames[id] || id)}" loading="lazy" decoding="async"></figure>
+      <h3>${escapeHTML(endingNames[id] || id)}</h3>
+      <p>Ilustración de desenlace de la Production Edition.</p>
+    </article>`).join("");
+  const prologueCards = Object.entries(window.N404_PREMIUM_ART?.prologue || {}).map(([id, art]) => `
+    <article class="info-card unlocked gallery-card">
+      <figure class="gallery-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(id)}" loading="lazy" decoding="async"></figure>
+      <h3>${escapeHTML(id.toUpperCase())}</h3>
+      <p>Panel cinematográfico del prólogo interactivo.</p>
+    </article>`).join("");
+  const caseArtCards = DATA.cases.map(caseData => {
+    const meta = window.N404_NOCTURNE?.cases?.[caseData.id];
+    return meta?.art ? `
+      <article class="info-card unlocked gallery-card">
+        <figure class="gallery-art"><img src="${escapeHTML(meta.art)}" alt="Emblema de ${escapeHTML(caseData.title)}" loading="lazy" decoding="async"></figure>
+        <h3>${escapeHTML(caseData.title)}</h3>
+        <p>${escapeHTML(meta.transmission)}</p>
+      </article>` : "";
+  }).join("");
+  const eventArtCards = Object.entries(window.N404_PREMIUM_ART?.events || {}).map(([id, art]) => {
+    const entry = DATA.events.find(event => event.id === id);
+    return `
+      <article class="info-card unlocked gallery-card">
+        <figure class="gallery-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(entry?.title || id)}" loading="lazy" decoding="async"></figure>
+        <h3>${escapeHTML(entry?.title || id)}</h3>
+        <p>${escapeHTML(entry?.text || "Evento recuperado de la frecuencia 404.")}</p>
+      </article>`;
+  }).join("");
+  content.innerHTML = `
+    <p>La Nocturne Edition reúne la dirección visual del proyecto en una galería coherente, sin convertir la interfaz en una colección de efectos.</p>
+    <h3>Prólogo</h3><div class="info-grid">${prologueCards}</div>
+    <h3>Emblemas de expediente</h3><div class="info-grid">${caseArtCards}</div>
+    <h3>Eventos ilustrados</h3><div class="info-grid">${eventArtCards}</div>
+    <h3>Jefes ilustrados</h3><div class="info-grid">${bossCards}</div>
+    <h3>Finales ilustrados</h3><div class="info-grid">${endingCards}</div>
+  `;
+    } else if (kind === "transmissions") {
+      eyebrow.textContent = "NOCTURNE AUDIO ROOM";
+      title.textContent = "Sala de transmisiones";
+      const cards = DATA.cases.map(caseData => {
+        const meta = window.N404_NOCTURNE?.cases?.[caseData.id];
+        const unlocked = storedProfile.cases.includes(caseData.id) || state?.caseProgress?.[caseData.id];
+        return `
+          <article class="info-card transmission-card ${unlocked ? "unlocked" : "locked"}">
+            ${meta?.art ? `<figure class="transmission-card__art"><img src="${escapeHTML(meta.art)}" alt="" aria-hidden="true" loading="lazy" decoding="async"></figure>` : ""}
+            <p class="event-kicker">${escapeHTML(meta?.label || "FRECUENCIA BLOQUEADA")}</p>
+            <h3>${unlocked ? escapeHTML(caseData.title) : "████████"}</h3>
+            <p>${unlocked ? escapeHTML(meta?.transmission || caseData.tagline) : "Resuelve o visita el expediente para recuperar esta transmisión."}</p>
+            <button class="ghost-button transmission-play" data-transmission-scene="${escapeHTML(meta?.scene || caseData.scene)}" ${unlocked ? "" : "disabled"}>Escuchar ambiente</button>
+          </article>`;
+      }).join("");
+      content.innerHTML = `
+        <p>Previsualiza los paisajes sonoros recuperados sin iniciar una campaña. Los expedientes permanecen bloqueados hasta que has entrado en ellos o los has resuelto.</p>
+        <div class="transmission-toolbar"><button type="button" class="ghost-button" id="transmission-stop">Detener audio</button></div>
+        <div class="info-grid transmission-grid">${cards}</div>
+      `;
+      content.querySelectorAll("[data-transmission-scene]").forEach(button => button.addEventListener("click", () => {
+        if (!premiumAudioEnabled("ambient")) {
+          showToast("ACTIVA AUDIO Y AMBIENTE EN OPCIONES");
+          return;
+        }
+        window.N404_PREMIUM_AUDIO?.previewScene(button.dataset.transmissionScene, .2, 8000);
+        premiumCue("anomalyStinger", "fx", .12);
+        showToast("TRANSMISIÓN ABIERTA · 8 SEGUNDOS");
+      }));
+      document.getElementById("transmission-stop")?.addEventListener("click", () => {
+        window.N404_PREMIUM_AUDIO?.stopAmbient();
+        showToast("TRANSMISIÓN CERRADA");
+      });
     } else if (kind === "credits") {
       eyebrow.textContent = "UNIVERSO 404";
       title.textContent = "Créditos";
       content.innerHTML = `
         <div class="info-grid">
-          <article class="info-card unlocked"><h3>Nightmare 404 Remastered v2.0.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Juego de terror psicológico original preparado para navegador y GitHub Pages.</p></article>
+          <article class="info-card unlocked"><h3>Nightmare 404 Nocturne Edition v3.1.0</h3><p>Concepto, universo y dirección: I. Roig.</p><p>Nocturne Edition con pantalla de transmisión, portadas ilustradas por caso, stingers de audio por escenario, prólogo, galería y finales ilustrados, compatible con GitHub Pages.</p></article>
           <article class="info-card"><h3>Contenido</h3><p>Bloque 404, Hospital Saint Mercy, Bosque Raven Woods, Mansión Ashcroft y Nexo 404.</p><p>30 eventos narrativos, 20 enemigos, 5 jefes y 4 finales principales.</p></article>
           <article class="info-card"><h3>Identidad visual</h3><p>Icono Universo 404 aportado por el autor e integrado como símbolo central de la historia.</p><p>Dirección visual remasterizada: terror cinematográfico, expediente analógico, CRT y señal degradada.</p></article>
-          <article class="info-card"><h3>Tecnología</h3><p>HTML5, CSS3, JavaScript, LocalStorage y Service Worker.</p><p>Sin librerías, rastreadores ni dependencias externas.</p></article>
+          <article class="info-card"><h3>Tecnología</h3><p>HTML5, CSS3, JavaScript, Web Audio API, audio HTML5 local, LocalStorage y Service Worker.</p><p>Sin librerías, rastreadores ni dependencias externas en ejecución.</p></article>
+          <article class="info-card"><h3>Producción de audio</h3><p>FX y ambientes originales sintetizados para Nightmare 404. Interfaz CC0 de Kenney; detalle y procedencia en CREDITS-ASSETS.md.</p></article>
           <article class="info-card"><h3>Controles</h3><p>Ratón o pantalla táctil. Durante la investigación: teclas 1–4, M para mapa y Escape para pausa.</p></article>
           <article class="info-card"><h3>Aviso</h3><p>Ficción de terror con escenas de tensión, hospitales, criaturas y pérdida de cordura.</p></article>
         </div>
@@ -1553,18 +2059,28 @@
       title.textContent = "Opciones y datos";
       content.innerHTML = `
         <form class="settings-form" id="settings-form">
-          <label class="setting-row"><span>Sonido de interfaz</span><input name="sound" type="checkbox" ${value.sound ? "checked" : ""}></label>
+          <label class="setting-row"><span><b>Audio maestro</b><small>Activa o silencia toda la producción sonora.</small></span><input name="sound" type="checkbox" ${value.sound ? "checked" : ""}></label>
+          <div class="audio-mixer" aria-label="Mezclador de audio"><div class="audio-mixer__heading"><b>Mezclador 404</b><small>Canales independientes</small></div>
+            <label class="setting-row audio-channel"><span><b>Ambiente</b><small>Lluvia, hospital, bosque, mansión y Nexo.</small></span><input name="audioAmbient" type="checkbox" ${value.audioAmbient ? "checked" : ""}></label>
+            <label class="setting-row audio-channel"><span><b>FX</b><small>Pasos, impactos, puertas, agua, susurros y campanas.</small></span><input name="audioFx" type="checkbox" ${value.audioFx ? "checked" : ""}></label>
+            <label class="setting-row audio-channel"><span><b>Interfaz</b><small>Clicks y confirmaciones CC0 de Kenney.</small></span><input name="audioUi" type="checkbox" ${value.audioUi ? "checked" : ""}></label>
+            <label class="setting-row audio-channel"><span><b>Música</b><small>Drone ritual adaptativo y discreto.</small></span><input name="audioMusic" type="checkbox" ${value.audioMusic ? "checked" : ""}></label>
+          </div>
           <label class="setting-row"><span>Efectos CRT, ruido y viñeta</span><input name="crt" type="checkbox" ${value.crt ? "checked" : ""}></label>
           <label class="setting-row"><span>Reducir movimiento</span><input name="reducedMotion" type="checkbox" ${value.reducedMotion ? "checked" : ""}></label>
           <label class="setting-row"><span>Texto grande</span><input name="largeText" type="checkbox" ${value.largeText ? "checked" : ""}></label>
           <label class="setting-row"><span>Contraste reforzado</span><input name="highContrast" type="checkbox" ${value.highContrast ? "checked" : ""}></label>
+          <label class="setting-row"><span><b>Apariciones y flashes narrativos</b><small>Permite anomalías repentinas. Puedes desactivarlas sin perder las animaciones ambientales.</small></span><input name="anomalies" type="checkbox" ${value.anomalies ? "checked" : ""}></label>
           <button type="submit" class="ghost-button">Guardar opciones</button>
         </form>
         <h3>Copias de seguridad</h3>
         <div class="data-actions">
-          <button type="button" class="ghost-button" id="export-data">Exportar datos</button>
-          <button type="button" class="ghost-button" id="import-data">Importar datos</button>
-          <textarea id="data-transfer" spellcheck="false" aria-label="Datos exportados o importados" placeholder="Los datos aparecerán aquí."></textarea>
+          <button type="button" class="ghost-button" id="download-backup">Descargar copia .json</button>
+          <button type="button" class="ghost-button" id="upload-backup">Cargar copia .json</button>
+          <input id="backup-file" type="file" accept="application/json,.json" hidden>
+          <button type="button" class="ghost-button" id="export-data">Mostrar JSON</button>
+          <button type="button" class="ghost-button" id="import-data">Importar JSON pegado</button>
+          <textarea id="data-transfer" spellcheck="false" aria-label="Datos exportados o importados" placeholder="Copia de seguridad JSON: puedes mostrarla aquí o pegar una para importarla."></textarea>
           <button type="button" class="ghost-button" id="reset-progress">Borrar todo el progreso</button>
         </div>
       `;
@@ -1576,36 +2092,79 @@
           crt: form.has("crt"),
           reducedMotion: form.has("reducedMotion"),
           largeText: form.has("largeText"),
-          highContrast: form.has("highContrast")
+          highContrast: form.has("highContrast"),
+          anomalies: form.has("anomalies"),
+          audioAmbient: form.has("audioAmbient"),
+          audioFx: form.has("audioFx"),
+          audioUi: form.has("audioUi"),
+          audioMusic: form.has("audioMusic")
         });
         applySettings();
         showToast("OPCIONES GUARDADAS");
       });
+      const backupPayload = () => ({
+        format: "nightmare404-backup-v1",
+        exportedAt: new Date().toISOString(),
+        appVersion: DATA.version,
+        save: readJSON(SAVE_KEY, null),
+        profile: profile(),
+        settings: settings()
+      });
+      const backupText = () => JSON.stringify(backupPayload(), null, 2);
+      const importBackup = raw => {
+        if (typeof raw !== "string" || !raw.trim()) throw new Error("La copia está vacía");
+        if (raw.length > 1_000_000) throw new Error("La copia supera el límite de 1 MB");
+        const payload = JSON.parse(raw);
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Contenido no válido");
+        if (payload.format !== "nightmare404-backup-v1") throw new Error("Formato desconocido");
+        if (payload.save && !validSave(payload.save)) throw new Error("Partida incompatible");
+        const writes = [];
+        if (payload.save) writes.push(writeJSON(SAVE_KEY, payload.save)); else writes.push(storageRemove(SAVE_KEY));
+        if (payload.profile) writes.push(writeJSON(PROFILE_KEY, sanitizeProfile(payload.profile)));
+        if (payload.settings) writes.push(writeJSON(SETTINGS_KEY, sanitizeSettings(payload.settings)));
+        if (writes.some(result => result === false)) throw new Error("El navegador no permitió guardar todos los datos");
+        applySettings();
+        updateContinueButton();
+      };
       document.getElementById("export-data").addEventListener("click", () => {
-        document.getElementById("data-transfer").value = JSON.stringify({
-          format: "nightmare404-backup-v1",
-          save: readJSON(SAVE_KEY, null),
-          profile: profile(),
-          settings: settings()
-        }, null, 2);
-        showToast("DATOS EXPORTADOS AL CUADRO DE TEXTO");
+        document.getElementById("data-transfer").value = backupText();
+        showToast("COPIA JSON MOSTRADA");
+      });
+      document.getElementById("download-backup").addEventListener("click", () => {
+        const blob = new Blob([backupText()], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `nightmare-404-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("COPIA DESCARGADA");
       });
       document.getElementById("import-data").addEventListener("click", () => {
         try {
-          const raw = document.getElementById("data-transfer").value;
-          if (raw.length > 1_000_000) throw new Error("La copia supera el límite de 1 MB");
-          const payload = JSON.parse(raw);
-          if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Contenido no válido");
-          if (payload.format !== "nightmare404-backup-v1") throw new Error("Formato desconocido");
-          if (payload.save && !validSave(payload.save)) throw new Error("Partida incompatible");
-          if (payload.save) writeJSON(SAVE_KEY, payload.save); else storageRemove(SAVE_KEY);
-          if (payload.profile) writeJSON(PROFILE_KEY, sanitizeProfile(payload.profile));
-          if (payload.settings) writeJSON(SETTINGS_KEY, sanitizeSettings(payload.settings));
-          applySettings();
-          updateContinueButton();
+          importBackup(document.getElementById("data-transfer").value);
           showToast("DATOS IMPORTADOS");
         } catch (error) {
           showToast(`IMPORTACIÓN FALLIDA: ${error.message}`);
+        }
+      });
+      const fileInput = document.getElementById("backup-file");
+      document.getElementById("upload-backup").addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        try {
+          if (file.size > 1_000_000) throw new Error("La copia supera el límite de 1 MB");
+          const raw = await file.text();
+          importBackup(raw);
+          document.getElementById("data-transfer").value = raw;
+          showToast("COPIA CARGADA E IMPORTADA");
+        } catch (error) {
+          showToast(`IMPORTACIÓN FALLIDA: ${error.message}`);
+        } finally {
+          fileInput.value = "";
         }
       });
       document.getElementById("reset-progress").addEventListener("click", () => {
@@ -1624,14 +2183,71 @@
     showScreen("info");
   }
 
-  function handleMenuAction(action) {
-    beep(160, 0.04);
-    if (action === "new-game") {
+
+function showPrologue() {
+  premiumCue("intro", "fx", .22);
+  const slides = [
+    {
+      id: "signal",
+      kicker: "BLACK HOLLOW · 24 MAY 1997 · 04:04",
+      title: "La primera transmisión",
+      text: "A las 04:04, Black Hollow emite una frecuencia que no viaja por radio sino por memoria, culpa y sueño. Nadie la escucha del todo; todos la recuerdan demasiado tarde."
+    },
+    {
+      id: "descent",
+      kicker: "PROTOCOLO DE DESCENSO",
+      title: "Tres investigadores, una ciudad que no figura en los mapas",
+      text: "Lucía Vega, Matías Rivas y Noa Sanz no entran en un simple caso. Descienden a un sistema vivo de anomalías: hospital, bosque, mansión, bloque y un nexo enterrado bajo la ciudad."
+    },
+    {
+      id: "threshold",
+      kicker: "EL UMBRAL",
+      title: "La realidad está a punto de mirarte",
+      text: "Cada expediente abre una herida. Cada decisión decide cuánto conocimiento, contención o corrupción sobreviven al amanecer. Elige al investigador y acepta la transmisión."
+    }
+  ];
+  let index = 0;
+  const renderSlide = () => {
+    const slide = slides[index];
+    const art = window.N404_PREMIUM_ART?.prologue?.[slide.id];
+    openDialog(`
+      <div class="dialog-body production-prologue">
+        <p class="event-kicker">${escapeHTML(slide.kicker)}</p>
+        ${art ? `<figure class="ending-art prologue-art"><img src="${escapeHTML(art)}" alt="${escapeHTML(slide.title)}" loading="eager" decoding="async"></figure>` : ""}
+        <h2 id="dialog-title">${escapeHTML(slide.title)}</h2>
+        <p>${escapeHTML(slide.text)}</p>
+        <div class="dialog-actions">
+          <button id="prologue-skip">Ir al expediente</button>
+          <button id="prologue-next">${index < slides.length - 1 ? "Siguiente" : "Elegir investigador"}</button>
+        </div>
+      </div>
+    `);
+    document.getElementById("prologue-skip").addEventListener("click", () => {
+      closeDialog();
       renderCharacterSelect();
       showScreen("character");
+    });
+    document.getElementById("prologue-next").addEventListener("click", () => {
+      if (index < slides.length - 1) {
+        index += 1;
+        renderSlide();
+        return;
+      }
+      closeDialog();
+      renderCharacterSelect();
+      showScreen("character");
+    });
+  };
+  renderSlide();
+}
+
+  function handleMenuAction(action) {
+    beep(160, 0.04, "ui");
+    if (action === "new-game") {
+      showPrologue();
     } else if (action === "continue") {
       loadGame();
-    } else if (["archive", "achievements", "settings", "credits"].includes(action)) {
+    } else if (["archive", "achievements", "settings", "credits", "gallery", "transmissions"].includes(action)) {
       renderInfo(action);
     }
   }
@@ -1663,6 +2279,12 @@
     if (item) useItemOutside(item.dataset.useItem);
 
     if (event.target.closest("[data-close-dialog]")) closeDialog();
+  });
+
+
+  document.getElementById("enter-signal").addEventListener("click", () => {
+    premiumCue("intro", "fx", .32);
+    showScreen("menu");
   });
 
   document.getElementById("pause-btn").addEventListener("click", () => pauseGame(false));
@@ -1705,7 +2327,7 @@
     node.style.color = next === "ESTABLE" ? "var(--green)" : "var(--red)";
   }
 
-  document.body.dataset.screen = "menu";
+  document.body.dataset.screen = "intro";
   applySettings();
   updateContinueButton();
   registerServiceWorker();

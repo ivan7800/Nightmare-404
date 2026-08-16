@@ -1,5 +1,5 @@
 window.N404_DATA = {
-  "version": "2.0.0",
+  "version": "3.1.0",
   "balance": {
     "startSignal": 7,
     "signalExplore": 3,
@@ -30,26 +30,26 @@ window.N404_DATA = {
       "sanity": 96,
       "power": 9,
       "focus": 9,
-      "description": "Sigue una cadena de desapariciones que todos los periódicos se niegan a publicar.",
-      "passive": "Instinto periodístico: mayor probabilidad de encontrar pistas y una opción exclusiva en ciertos eventos.",
+      "description": "Persigue un patrón de desapariciones unido a símbolos astrales y testimonios que hablan de un mar negro bajo la ciudad.",
+      "passive": "Ojo del patrón: mayor probabilidad de encontrar pistas y una opción exclusiva en ciertos eventos, como si la ciudad quisiera ser leída.",
       "passiveKey": "extraClue",
       "special": "Analizar patrón",
-      "specialText": "Revela una debilidad: inflige daño moderado y reduce el siguiente ataque enemigo."
+      "specialText": "Revela una debilidad oculta: hiere la geometría de la entidad y debilita su siguiente manifestación."
     },
     {
       "id": "gabriel",
-      "name": "Gabriel Rojas",
-      "role": "Exorcista del Vaticano",
+      "name": "Matías Rivas",
+      "role": "Exorcista apóstata",
       "image": "assets/images/gabriel.webp",
       "health": 96,
       "sanity": 86,
       "power": 10,
       "focus": 6,
-      "description": "Abandonó la Iglesia después de escuchar una confesión pronunciada desde un ascensor vacío.",
-      "passive": "Rito de contención: causa daño adicional a espíritus y comienza con incienso ritual.",
+      "description": "Abandonó la Iglesia después de escuchar una confesión pronunciada por una garganta que no pertenecía a este mundo.",
+      "passive": "Liturgia del Umbral: causa daño adicional a entidades espirituales y comienza con incienso ritual.",
       "passiveKey": "spiritDamage",
       "special": "Rito de expulsión",
-      "specialText": "Consume cordura para causar daño intenso, especialmente contra entidades espirituales."
+      "specialText": "Consume cordura para trazar un rito prohibido que desgarra la presencia de entidades extradimensionales."
     },
     {
       "id": "noa",
@@ -60,64 +60,64 @@ window.N404_DATA = {
       "sanity": 104,
       "power": 9,
       "focus": 8,
-      "description": "Interceptó una red inalámbrica llamada PISO_404. Desde entonces recibe mensajes de sí misma.",
-      "passive": "Puerta trasera: la Señal aumenta más despacio y escapar de un combate es más sencillo.",
+      "description": "Interceptó una red inalámbrica llamada PISO_404. Desde entonces recibe paquetes enviados desde una versión futura y hambrienta de sí misma.",
+      "passive": "Puerta trasera: la Señal aumenta más despacio y escapar de un combate es más sencillo, como si el sistema quisiera conservarla.",
       "passiveKey": "signalControl",
       "special": "Sobrecarga de Señal",
-      "specialText": "Daña a la entidad y reduce la Señal mediante una interferencia controlada."
+      "specialText": "Daña a la entidad y reduce la Señal mediante una interferencia ritualizada entre código y radiofrecuencia."
     }
   ],
   "weather": [
     {
       "id": "rain",
-      "name": "Lluvia",
+      "name": "Lluvia de cenagal",
       "icon": "////",
-      "description": "La lluvia oculta pasos y voces.",
+      "description": "Cada gota deja un eco que no coincide con tu cuerpo.",
       "signal": 1,
       "enemy": 0,
       "clue": 0.04
     },
     {
       "id": "fog",
-      "name": "Niebla",
+      "name": "Bruma abisal",
       "icon": "≋≋",
-      "description": "Las distancias dejan de ser fiables.",
+      "description": "La niebla parece respirarte antes de tocarte.",
       "signal": 1,
       "enemy": 0,
       "clue": -0.08
     },
     {
       "id": "storm",
-      "name": "Tormenta",
+      "name": "Tormenta ritual",
       "icon": "ϟϟ",
-      "description": "La electricidad alimenta la anomalía.",
+      "description": "La electricidad dibuja constelaciones que nadie debería interpretar.",
       "signal": 2,
       "enemy": 1,
       "clue": 0.02
     },
     {
       "id": "clear",
-      "name": "Cielo vacío",
+      "name": "Cielo sin estrellas",
       "icon": "○",
-      "description": "Una calma demasiado perfecta.",
+      "description": "Una calma imposible: el firmamento parece haber sido vaciado.",
       "signal": 0,
       "enemy": 0,
       "clue": 0.08
     },
     {
       "id": "eclipse",
-      "name": "Eclipse",
+      "name": "Alineación negra",
       "icon": "◉",
-      "description": "Las sombras recuerdan tu nombre.",
+      "description": "Algo inmenso se superpone a la luna y aprende tu contorno.",
       "signal": 2,
       "enemy": 2,
       "clue": 0.12
     },
     {
       "id": "ash",
-      "name": "Ceniza",
+      "name": "Polvo del afuera",
       "icon": "·:·",
-      "description": "Cae ceniza aunque no hay ningún incendio.",
+      "description": "Cae materia fría de un lugar donde el fuego no existe.",
       "signal": 1,
       "enemy": 1,
       "clue": 0.04
@@ -132,9 +132,9 @@ window.N404_DATA = {
       "location": "Bloque 404",
       "icon": "▥",
       "scene": "block",
-      "tagline": "Un ascensor lleva a una planta que no figura en ningún plano.",
-      "description": "Los vecinos desaparecen después de pulsar un botón que solo aparece a las 04:04.",
-      "objective": "Reúne cuatro pistas y abre el ascensor sin dejar que la Señal ocupe el edificio.",
+      "tagline": "Un ascensor canta una planta imposible que sólo existe cuando la ciudad sueña.",
+      "description": "Los vecinos desaparecen después de pulsar un botón que emerge a las 04:04, como una pupila abriéndose en el panel.",
+      "objective": "Reúne cuatro pistas y abre el ascensor sin dejar que la Señal convierta el edificio en un órgano del Otro Lado.",
       "clueTarget": 4,
       "minExplores": 4,
       "boss": "elevator",
@@ -157,15 +157,15 @@ window.N404_DATA = {
         "fog",
         "storm"
       ],
-      "intro": "El portal está abierto. En el panel del ascensor parpadea un número imposible: 404.",
+      "intro": "El portal está abierto. En el panel del ascensor palpita un número imposible: 404.",
       "resolution": {
         "title": "Las puertas permanecen abiertas",
-        "text": "Tras la cabina hay un pasillo vertical. El edificio espera que decidas qué hacer con la primera grieta.",
+        "text": "Tras la cabina no hay maquinaria sino un corredor vertical cubierto de símbolos húmedos. El edificio espera tu ofrenda.",
         "choices": [
           {
             "id": "seal",
-            "label": "Sellar el acceso con el círculo de sal",
-            "result": "El edificio exhala y los botones vuelven a ser normales.",
+            "label": "Sellar el umbral el acceso con el círculo de sal",
+            "result": "La grieta se cierra como un ojo cauterizado y la ciudad expulsa un suspiro de piedra.",
             "seals": 1,
             "knowledge": 0,
             "signal": -2,
@@ -173,8 +173,8 @@ window.N404_DATA = {
           },
           {
             "id": "descend",
-            "label": "Descender para estudiar la planta imposible",
-            "result": "Regresas con planos que se dibujan solos, pero algo ha memorizado tus pasos.",
+            "label": "Descender para estudiar la verdad abisal",
+            "result": "Regresas con conocimiento prohibido; algo detrás del velo ya conoce tu nombre y tu respiración.",
             "seals": 0,
             "knowledge": 1,
             "signal": 0,
@@ -192,9 +192,9 @@ window.N404_DATA = {
       "location": "Hospital Saint Mercy",
       "icon": "✚",
       "scene": "hospital",
-      "tagline": "Un ala clausurada continúa operando durante la madrugada.",
-      "description": "Pacientes dados por muertos aparecen en cámaras internas pidiendo que alguien apague las máquinas.",
-      "objective": "Localiza la Sala 13, recupera los historiales y detén la cirugía que nunca termina.",
+      "tagline": "Un ala clausurada sigue operando sobre cuerpos que ya han olvidado morir.",
+      "description": "Pacientes dados por muertos reaparecen en cámaras internas, suplicando que alguien interrumpa la liturgia mecánica de las máquinas.",
+      "objective": "Localiza la Sala 13, recupera los historiales y detén la cirugía cósmica que nunca termina.",
       "clueTarget": 4,
       "minExplores": 4,
       "boss": "surgeon",
@@ -217,10 +217,10 @@ window.N404_DATA = {
         "storm",
         "clear"
       ],
-      "intro": "Las puertas automáticas se abren sin corriente. El altavoz anuncia tu ingreso con fecha de mañana.",
+      "intro": "Las puertas automáticas se abren sin corriente. El altavoz pronuncia tu ingreso con una voz que parece recordar tu autopsia.",
       "resolution": {
-        "title": "El último turno",
-        "text": "Los pacientes permanecen conectados a una memoria común. Puedes liberarlos o conservar el archivo para comprender la Señal.",
+        "title": "La puerta del quirófano respira",
+        "text": "Tras la sala sellada late una membrana translúcida donde se reflejan constelaciones anatómicas.",
         "choices": [
           {
             "id": "release",
@@ -252,9 +252,9 @@ window.N404_DATA = {
       "location": "Bosque Raven Woods",
       "icon": "♜",
       "scene": "forest",
-      "tagline": "Las campanas suenan bajo tierra cuando alguien abandona el sendero.",
-      "description": "Una emisora forestal transmite coordenadas que forman el nombre de personas desaparecidas.",
-      "objective": "Sigue la transmisión, reúne cuatro marcas del sendero y encuentra el santuario enterrado.",
+      "tagline": "El bosque murmura con bocas enterradas y senderos que no llevan a la misma noche.",
+      "description": "Animales y excursionistas han sido hallados secos, como si algo hubiese bebido de ellos su recuerdo de la forma.",
+      "objective": "Sigue las marcas antiguas, reúne cuatro pistas y enfrenta la voluntad que enraíza Raven Woods en otra esfera.",
       "clueTarget": 4,
       "minExplores": 4,
       "boss": "stag",
@@ -277,10 +277,10 @@ window.N404_DATA = {
         "ash",
         "eclipse"
       ],
-      "intro": "Los árboles bloquean la carretera detrás de ti. La radio del coche repite: «No mires las astas».",
+      "intro": "El aire huele a barro salado. Entre los troncos cuelgan campanillas hechas con hueso y óxido.",
       "resolution": {
-        "title": "El corazón bajo la tierra",
-        "text": "Las raíces rodean un transmisor antiguo. El bosque puede ser silenciado o escuchado.",
+        "title": "El claro sin cielo",
+        "text": "Las raíces forman un círculo perfecto desde el que puede verse un firmamento ajeno.",
         "choices": [
           {
             "id": "silence",
@@ -312,9 +312,9 @@ window.N404_DATA = {
       "location": "Mansión Ashcroft",
       "icon": "♛",
       "scene": "mansion",
-      "tagline": "La familia Ashcroft sigue posando para un cuadro pintado hace un siglo.",
-      "description": "Cada nueva fotografía de la mansión incluye una figura más. La última se parece a ti.",
-      "objective": "Reconstruye la historia familiar y evita que tu rostro complete el retrato.",
+      "tagline": "La casa conserva una genealogía escrita en retratos que aún parpadean.",
+      "description": "Ashcroft Manor no está abandonada: simplemente aprendió a cerrar la puerta a las décadas correctas.",
+      "objective": "Explora la mansión, reúne cuatro pistas y decide si romper o estudiar el linaje que la sostiene.",
       "clueTarget": 4,
       "minExplores": 4,
       "boss": "lady",
@@ -337,10 +337,10 @@ window.N404_DATA = {
         "clear",
         "eclipse"
       ],
-      "intro": "La verja se cierra tras de ti. Todas las ventanas muestran la misma habitación, aunque miran en direcciones distintas.",
+      "intro": "Los goznes no chirrían. La mansión te abre como si recordara que ya estuviste dentro en otra vida.",
       "resolution": {
-        "title": "La última pincelada",
-        "text": "El retrato exige un heredero. Puedes destruirlo o firmar el libro de la familia para acceder a sus secretos.",
+        "title": "La herencia incompleta",
+        "text": "El salón principal se pliega sobre sí mismo y revela una galería de retratos aún sin pintar.",
         "choices": [
           {
             "id": "burn",
@@ -373,9 +373,9 @@ window.N404_DATA = {
       "icon": "◉",
       "scene": "nexus",
       "final": true,
-      "tagline": "Todas las anomalías transmiten desde el mismo lugar.",
-      "description": "El icono del Universo 404 es un mapa. Los cuatro focos forman una puerta fuera de la realidad.",
-      "objective": "Reúne cinco coordenadas, atraviesa el Nexo y decide el destino de Black Hollow.",
+      "tagline": "Bajo la ciudad late una geometría que no fue diseñada para la mente humana.",
+      "description": "El Nexo 404 reúne las cuatro heridas en una sola boca estelar que desea mirar a través de ti.",
+      "objective": "Reúne las verdades dispersas, soporta la mirada del Nexo y decide qué relación tendrá Black Hollow con el abismo.",
       "clueTarget": 4,
       "minExplores": 4,
       "boss": "dreamer",
@@ -398,14 +398,14 @@ window.N404_DATA = {
         "ash",
         "storm"
       ],
-      "intro": "El Universo 404 gira en la pantalla. Sus espirales se alinean y una quinta localización aparece debajo de la ciudad."
+      "intro": "La escalera termina en un silencio líquido. Bajo tus pies, la piedra late al ritmo de algo dormido y atento."
     }
   ],
   "enemies": [
     {
       "id": "faceless",
       "case": "block404",
-      "name": "La vecina sin rostro",
+      "name": "La inquilina desollada del rostro",
       "icon": "◉",
       "hp": 22,
       "attack": 5,
@@ -416,7 +416,7 @@ window.N404_DATA = {
     {
       "id": "shadow",
       "case": "block404",
-      "name": "Sombra del rellano",
+      "name": "Sombra del rellano abisal",
       "icon": "▰",
       "hp": 24,
       "attack": 6,
@@ -603,7 +603,7 @@ window.N404_DATA = {
     {
       "id": "observer",
       "case": "nexus",
-      "name": "El Observador lateral",
+      "name": "Observador de la grieta",
       "icon": "◉",
       "hp": 39,
       "attack": 10,
@@ -627,14 +627,15 @@ window.N404_DATA = {
     {
       "id": "elevator",
       "case": "block404",
-      "name": "El Ascensor Hambriento",
+      "name": "El Ascensor Voraz",
       "icon": "▥",
       "hp": 58,
       "attack": 10,
       "sanity": 6,
       "type": "void",
       "text": "Los cables son tendones. Los botones son dientes. La cabina lleva décadas esperando tu peso.",
-      "weakItem": "fuse"
+      "weakItem": "fuse",
+      "description": "Una caja litúrgica que digiere pisos, nombres y horas enteras."
     },
     {
       "id": "surgeon",
@@ -646,7 +647,8 @@ window.N404_DATA = {
       "sanity": 7,
       "type": "spirit",
       "text": "Opera recuerdos, no cuerpos. Cada instrumento lleva grabado uno de tus secretos.",
-      "weakItem": "scalpel"
+      "weakItem": "scalpel",
+      "description": "Opera con instrumental imposible sobre anatomías que pertenecen a varias realidades a la vez."
     },
     {
       "id": "stag",
@@ -658,7 +660,8 @@ window.N404_DATA = {
       "sanity": 7,
       "type": "flesh",
       "text": "Sus astas atraviesan el cielo. De cada punta cuelga una campana con un nombre.",
-      "weakItem": "flare"
+      "weakItem": "flare",
+      "description": "Un heraldo astado cuya cornamenta dibuja constelaciones muertas entre los árboles."
     },
     {
       "id": "lady",
@@ -670,19 +673,21 @@ window.N404_DATA = {
       "sanity": 8,
       "type": "spirit",
       "text": "Su rostro cambia para parecerse a quien la observa. El lienzo late detrás de ella.",
-      "weakItem": "silverMirror"
+      "weakItem": "silverMirror",
+      "description": "La voluntad degenerada de una dinastía que no acepta el cierre de su sangre."
     },
     {
       "id": "dreamer",
       "case": "nexus",
-      "name": "The Dreamer / El Soñador",
+      "name": "El Soñador del Abismo",
       "icon": "404",
       "hp": 76,
       "attack": 13,
       "sanity": 10,
       "type": "void",
       "text": "No tiene forma propia. Usa la ciudad, tus recuerdos y la interfaz para imaginarse un cuerpo.",
-      "weakItem": "universeShard"
+      "weakItem": "universeShard",
+      "description": "Una inteligencia cósmica que sueña ciudades, linajes y accidentes como si fueran recuerdos propios."
     }
   ],
   "items": {
@@ -915,7 +920,7 @@ window.N404_DATA = {
           }
         },
         {
-          "label": "[Gabriel] Pronunciar el rito de identidad",
+          "label": "[Matías] Pronunciar el rito de identidad",
           "requiresPassive": "spiritDamage",
           "outcome": {
             "sanity": 4,
@@ -1089,7 +1094,7 @@ window.N404_DATA = {
           }
         },
         {
-          "label": "[Gabriel] Bendecir la sala",
+          "label": "[Matías] Bendecir la sala",
           "requiresPassive": "spiritDamage",
           "outcome": {
             "signal": -5,
@@ -1277,7 +1282,7 @@ window.N404_DATA = {
           }
         },
         {
-          "label": "[Gabriel] Recitar los nombres",
+          "label": "[Matías] Recitar los nombres",
           "requiresPassive": "spiritDamage",
           "outcome": {
             "sanity": 5,
@@ -1436,7 +1441,7 @@ window.N404_DATA = {
           }
         },
         {
-          "label": "[Gabriel] Bendecir el vino",
+          "label": "[Matías] Bendecir el vino",
           "requiresPassive": "spiritDamage",
           "outcome": {
             "signal": -5,
@@ -1600,7 +1605,7 @@ window.N404_DATA = {
       "id": "n-copies",
       "case": "nexus",
       "title": "Tres investigadores más",
-      "text": "Lucía, Gabriel y Noa esperan al otro lado de un cristal, incluso si uno de ellos eres tú. Afirman ser la partida original.",
+      "text": "Lucía, Matías y Noa esperan al otro lado de un cristal, incluso si uno de ellos eres tú. Afirman ser la partida original.",
       "choices": [
         {
           "label": "Romper el cristal",
@@ -1689,7 +1694,7 @@ window.N404_DATA = {
           }
         },
         {
-          "label": "[Gabriel] Consagrar el símbolo",
+          "label": "[Matías] Consagrar el símbolo",
           "requiresPassive": "spiritDamage",
           "outcome": {
             "seals": 1,

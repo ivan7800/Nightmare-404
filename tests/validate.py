@@ -164,7 +164,7 @@ def main() -> int:
     if bosses != referenced_bosses:
         errors.append(f"jefes sin caso: {sorted(bosses - referenced_bosses)}")
 
-    reference_files = ["index.html", "css/styles.css", "js/data.js", "sw.js", "manifest.webmanifest"]
+    reference_files = ["index.html", "css/styles.css", "css/premium.css", "js/data.js", "js/modules/premium-art.js", "js/modules/premium-audio.js", "js/modules/nocturne-ui.js", "js/app.js", "sw.js", "manifest.webmanifest"]
     pattern = re.compile(r"(?:src=|href=|url\(|\"|')((?:assets|css|js)/[^\"')\s]+)")
     for name in reference_files:
         text = (ROOT / name).read_text(encoding="utf-8")
