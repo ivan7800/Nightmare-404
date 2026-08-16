@@ -1,4 +1,4 @@
-# Créditos de assets — Nightmare 404 v3.1.0
+# Créditos de assets — Nightmare 404 v3.2.0
 
 Esta edición prioriza recursos originales y locales. La aplicación no carga audio, imágenes ni scripts desde terceros en tiempo de ejecución.
 
@@ -54,7 +54,7 @@ Doce eventos clave cuentan con ilustraciones vectoriales locales originales en `
 
 No se han incorporado imágenes de Pinterest, ArtStation, videojuegos comerciales, películas ni otras obras protegidas de terceros.
 
-## Nocturne Edition v3.1
+## Director's Cut v3.2
 
 - Las cinco portadas de expediente son assets vectoriales originales creados para esta build.
 - `intro.ogg` y los cinco `case-*.ogg` son cues sintetizados específicamente para Nightmare 404.

@@ -1,19 +1,21 @@
-# NIGHTMARE 404 v3.1.0 — QA REPORT
+# NIGHTMARE 404 v3.2.0 — QA REPORT
 
-## Evidencia final
+## Automatizado ejecutado en esta release
 
-- `python tests/validate.py` → ✅ VERIFICADO
-- `node --check` sobre `app.js`, `data.js`, módulos y `sw.js` → ✅ VERIFICADO
-- `python tests/ui_smoke.py` → ✅ 12 escenarios funcionales
-- `python tests/layout_release.py` → ✅ 25 comprobaciones entre 320 y 1440 px
-- `node tests/sw_smoke.js` → ✅ 77 entradas de precaché; cachés ajenas preservadas
-- `node tests/balance_sim.js --ci` → ✅ equilibrio aceptado
-- Decodificación de audio OGG → ✅ 23/23
-- Recursos CORE servidos por HTTP local → ✅ 76/76 rutas explícitas + raíz
+- `python3 tests/validate.py` — PASS.
+- `python3 tests/ui_smoke.py` — PASS, 12 escenarios.
+- `python3 tests/layout_release.py` — PASS, 25 comprobaciones.
+- `python3 tests/layout_smoke.py` — PASS, 30 comprobaciones responsive/accesibilidad.
+- `node tests/sw_smoke.js` — PASS, 77 recursos precacheados; cachés ajenas preservadas.
+- `node tests/balance_sim.js 500 --ci` — PASS; partida mixta 37,6–41,4 %, todas las vías 27,6–50,4 %.
+- `node --check` sobre `app.js`, `premium-audio.js` y `nocturne-ui.js` — PASS.
 
-## Limitaciones
+## No ejecutado
 
-- `tests/layout_smoke.py` completo sufrió inestabilidad EPIPE/timeout del driver Playwright en este entorno. Se sustituyó como evidencia de release por `layout_release.py`, que valida las cinco anchuras objetivo con Chromium y reduced motion.
-- Safari iPhone/iPad físicos → ⏳ NO EJECUTADO.
-- Android físico → ⏳ NO EJECUTADO.
-- Instalación PWA real bajo HTTPS → ⏳ NO EJECUTADO.
+- `tests/dom_smoke.js`: requiere `jsdom`, no instalado en el entorno de esta ejecución.
+- Safari/iPhone/iPad/Android físicos: no disponibles en este entorno.
+- Playtesting humano completo de campañas largas: pendiente.
+
+## Criterio
+
+Los resultados anteriores prueban flujos automatizados y layout en Chromium headless, no equivalen a certificación multiplataforma física.

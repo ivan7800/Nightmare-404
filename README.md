@@ -1,23 +1,49 @@
-# NIGHTMARE 404 v3.1.0 — NOCTURNE EDITION
+# NIGHTMARE 404 v3.2.0 — DIRECTOR'S CUT
 
-Release evolutiva de la Production Edition centrada en **ritmo, arte contextual y audio**, no en añadir sistemas innecesarios.
+PWA estática/local-first de horror cósmico e investigación ambientada en Black Hollow. Esta edición evoluciona v3.1 sin convertir el proyecto en una colección de efectos: prioriza dirección de escena, ritmo, audio adaptativo, recuperación de partida y cierre de campaña.
 
-## Novedades v3.1
+## Qué cambia en v3.2
 
-- Pantalla cinematográfica propia antes de entrar por primera vez en cada expediente.
-- Cinco emblemas ilustrados de caso: Bloque 404, Saint Mercy, Raven Woods, Ashcroft y Nexo 404.
-- Sala de transmisiones para escuchar los ambientes recuperados de los casos visitados/resueltos.
-- Galería ampliada con prólogo, casos, 12 eventos ilustrados, cinco jefes y cuatro finales.
-- Nuevos stingers locales de introducción, entrada de caso, anomalía y cierre de expediente.
-- Compatibilidad con guardados v3.0.0 y anteriores admitidos.
-- PWA/offline actualizada para todos los nuevos recursos.
+- Dirección ambiental diferenciada para Bloque 404, Hospital Saint Mercy, Raven Woods, Mansión Ashcroft y Nexo 404.
+- Cinco jefes con presentación y fases visuales de contacto, fractura y estado crítico.
+- Mezcla sonora adaptativa según cordura, Señal, peligro y combate de jefe, reutilizando los 23 OGG locales.
+- Leitmotivs contextuales por escenario sin CDN ni dependencias externas.
+- Preludios de capítulo reforzados, resumen visual al cerrar cada expediente y estadísticas al terminar la campaña.
+- Codex visual con prólogo, expedientes, eventos, jefes y finales.
+- Recuperación automática desde el snapshot local válido anterior si el guardado principal queda corrupto/incompatible.
+- `prefers-reduced-motion` respetado desde la primera ejecución y opción manual de reducción de movimiento.
+- PWA con caché `v3.2.0`, limpieza de cachés antiguas y aviso cuando una actualización queda preparada.
 
-## Publicación
+## Contenido
 
-Proyecto estático sin backend ni dependencias externas de ejecución. Para probar localmente:
+- 3 investigadores.
+- 5 expedientes/casos.
+- 30 eventos narrativos.
+- 20 enemigos + 5 jefes.
+- 20 objetos.
+- 12 logros.
+- 4 finales.
+
+## Ejecutar localmente
 
 ```bash
 python -m http.server 8080
 ```
 
-Para GitHub Pages: rama `main`, carpeta `/(root)`.
+Después abre `http://localhost:8080/`.
+
+> No se promete compatibilidad completa mediante `file://`; Service Worker y PWA requieren HTTP/HTTPS.
+
+## GitHub Pages
+
+El proyecto está preparado para hosting estático en una subruta: usa rutas relativas, `start_url`/`scope` relativos y no requiere backend. Publica la rama `main` desde `/(root)`.
+
+## Privacidad
+
+No usa telemetría, cuentas ni backend. El progreso y las opciones se guardan en el navegador. Consulta `PRIVACY.md` y `SECURITY.md`.
+
+## Verificación
+
+Consulta `docs/V3.2-DIRECTORS-CUT-VERIFICATION.md`, `docs/QA-REPORT.md` y `docs/AUDIT-REPORT.md`.
+
+Las pruebas automatizadas no sustituyen playtesting humano ni pruebas físicas en iPhone/iPad/Android.
